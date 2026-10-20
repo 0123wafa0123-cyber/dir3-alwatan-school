@@ -85,8 +85,8 @@ export const HeroSection: React.FC<HeroSectionProps> = ({ onNavigate, onSelectSt
             <div className="relative group">
               <div className="absolute -inset-2 bg-gradient-to-r from-amber-400/30 to-emerald-400/30 rounded-3xl blur-xl group-hover:blur-2xl transition duration-500 opacity-70" />
               <img
-                src="/src/assets/images/shield_of_nation_hero_1792473197101.jpg"
-                alt="درع الوطن - شعار المبادرة الوطني"
+                src="/assets/images/shield_of_nation_hero_1792473197101.jpg"
+                جalt="درع الوطن - شعار المبادرة الوطني"
                 referrerPolicy="no-referrer"
                 className="relative w-72 sm:w-80 lg:w-96 rounded-2xl shadow-2xl border-2 border-amber-400/60 object-cover transform hover:scale-[1.02] transition-transform duration-300"
               />
