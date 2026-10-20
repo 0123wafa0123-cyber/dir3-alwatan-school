@@ -1,0 +1,112 @@
+{
+  "submissions": [
+    {
+      "id": "SUB-2026-627444",
+      "studentName": "نوف خالد",
+      "grade": "أول ثانوي ١",
+      "type": "text",
+      "title": "نبض الفخر والولاء",
+      "content": "سأكون دوماً درعاً حصيناً لديني ووطني ومجتمعي وقيادتي الرشيدة",
+      "backgroundTemplate": "golden-parchment",
+      "status": "pending",
+      "createdAt": "2026-10-20T06:24:28.079Z"
+    },
+    {
+      "id": "SUB-2026-548534",
+      "studentName": "طالبة تجريبية",
+      "grade": "ثاني ثانوي مسار عام ١",
+      "type": "text",
+      "title": "فداء وتضحية لدرع الوطن",
+      "content": "أنا درع لوطني وأفديه بعقيدتي وروحي وعلمي",
+      "status": "pending",
+      "createdAt": "2026-10-20T06:24:15.049Z"
+    },
+    {
+      "id": "SUB-2026-392949",
+      "studentName": "ريم عبد الله الحربي",
+      "grade": "أول ثانوي ١",
+      "type": "drawing",
+      "title": "درع الوطن بألوان المجد",
+      "content": "لوحة فنية وطنية معبرة",
+      "fileUrl": "/uploads/drawing_sample.png",
+      "status": "pending",
+      "createdAt": "2026-10-20T06:10:35.339Z"
+    },
+    {
+      "id": "SUB-2026-794226",
+      "studentName": "شهد عبدالعزيز العطوي",
+      "grade": "ثالث ثانوي - مسارات عام 1",
+      "type": "pledge",
+      "title": "ميثاق درع الوطن",
+      "content": "أعاهد الله أن أكون حامية لوطني ومجتمعي.",
+      "status": "pending",
+      "createdAt": "2026-10-20T05:29:56.625Z"
+    },
+    {
+      "id": "SUB-2026-264014",
+      "studentName": "ريم خالد الجهني",
+      "grade": "ثاني ثانوي - مسارات عام 1",
+      "type": "drawing",
+      "title": "راية التوحيد ودرع الأمان",
+      "content": "رسمة وطنية معبرة",
+      "fileUrl": "/src/assets/images/shield_of_nation_hero_1792473197101.jpg",
+      "status": "pending",
+      "createdAt": "2026-10-20T05:29:52.634Z"
+    },
+    {
+      "id": "SUB-2026-525199",
+      "studentName": "نورة فهد السعد",
+      "grade": "أول ثانوي - مسارات 1",
+      "type": "text",
+      "title": "درع الوطن في قلوبنا",
+      "content": "المادة 34 نبراس لوعينا وأداء واجبنا تجاه عقيدتنا ووطننا الغالي.",
+      "status": "pending",
+      "createdAt": "2026-10-20T05:29:48.439Z"
+    }
+  ],
+  "surveys": [
+    {
+      "id": "SRV-PRE-mvg9mc0v",
+      "studentName": "نورة فهد السعد",
+      "grade": "أول ثانوي ١",
+      "surveyType": "pre",
+      "q1": 2,
+      "q2": 3,
+      "q3": 3,
+      "q4": 2,
+      "q5": 4,
+      "createdAt": "2026-10-20T05:51:19.903Z"
+    },
+    {
+      "id": "SRV-POST-mvg9mfe7",
+      "studentName": "نورة فهد السعد",
+      "grade": "أول ثانوي ١",
+      "surveyType": "post",
+      "q1": 5,
+      "q2": 5,
+      "q3": 5,
+      "q4": 5,
+      "q5": 5,
+      "createdAt": "2026-10-20T05:51:24.271Z"
+    }
+  ],
+  "badges": [],
+  "teachers": [
+    {
+      "id": "teacher-1",
+      "username": "amal_rashid",
+      "passwordHash": "Amal@2026",
+      "displayName": "المعلمة أمل رشيد",
+      "role": "teacher_admin",
+      "school": "الثانوية الأولى بالبدع"
+    },
+    {
+      "id": "teacher-2",
+      "username": "wafa_alzahrani",
+      "passwordHash": "Wafa@2026",
+      "displayName": "المعلمة وفاء الزهراني",
+      "role": "teacher_admin",
+      "school": "الثانوية الأولى بالبدع"
+    }
+  ]
+}
