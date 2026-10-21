@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import html2pdf from 'html2pdf.js';
 import { api } from '../services/api';
-import { Submission, SurveyAnalytics, StudentSummary, TeacherUser } from '../types';
+import { Submission, SurveyAnalytics, StudentSummary, TeacherUser, TeacherMissionStats } from '../types';
 import { SCHOOL_GRADES } from '../constants/grades';
 import {
   Shield,
@@ -44,6 +44,7 @@ import {
 } from 'recharts';
 import { getShieldTemplate } from '../constants/templates';
 import { ShieldTextCard } from './ShieldTextCard';
+import heroShieldImg from '../assets/images/shield_of_nation_hero_1792473197101.jpg';
 
 interface TeacherDashboardProps {
   currentTeacher: TeacherUser | null;
@@ -62,13 +63,14 @@ export const TeacherDashboard: React.FC<TeacherDashboardProps> = ({
   const [loginError, setLoginError] = useState<string | null>(null);
   const [isLoggingIn, setIsLoggingIn] = useState(false);
 
-  // Dashboard views
-  const [activeTab, setActiveTab] = useState<'charts' | 'submissions' | 'students' | 'analytics' | 'report'>('charts');
+// Dashboard views
+  const [activeTab, setActiveTab] = useState<'charts' | 'submissions' | 'students' | 'analytics' | 'report' | 'missions'>('charts');
 
   // Data states
   const [submissions, setSubmissions] = useState<Submission[]>([]);
   const [students, setStudents] = useState<StudentSummary[]>([]);
   const [analytics, setAnalytics] = useState<SurveyAnalytics | null>(null);
+  const [missionStats, setMissionStats] = useState<TeacherMissionStats | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [feedbackMsg, setFeedbackMsg] = useState<string | null>(null);
 
@@ -144,7 +146,7 @@ export const TeacherDashboard: React.FC<TeacherDashboardProps> = ({
   const fetchData = async () => {
     setIsLoading(true);
     try {
-      const [subsRes, studentsRes, analyticsRes] = await Promise.all([
+      const [subsRes, studentsRes, analyticsRes, missionsRes] = await Promise.all([
         api.getSubmissions({
           search: searchTerm || undefined,
           grade: gradeFilter !== 'all' ? gradeFilter : undefined,
@@ -152,12 +154,14 @@ export const TeacherDashboard: React.FC<TeacherDashboardProps> = ({
           status: statusFilter !== 'all' ? statusFilter : undefined
         }),
         api.getStudents(),
-        api.getSurveyAnalytics()
+        api.getSurveyAnalytics(),
+        api.getTeacherMissionStats()
       ]);
 
       setSubmissions(subsRes.submissions);
       setStudents(studentsRes.students);
       setAnalytics(analyticsRes);
+      setMissionStats(missionsRes);
     } catch (err: any) {
       console.error('Error fetching dashboard data:', err);
     } finally {
@@ -536,6 +540,18 @@ export const TeacherDashboard: React.FC<TeacherDashboardProps> = ({
         >
           <BarChart3 className="w-4 h-4" />
           <span>قياس الأثر والاستبانات</span>
+        </button>
+
+        <button
+          onClick={() => setActiveTab('missions')}
+          className={`px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all cursor-pointer flex items-center gap-2 ${
+            activeTab === 'missions'
+              ? 'bg-emerald-800 text-white shadow-xs'
+              : 'text-slate-700 hover:bg-slate-100'
+          }`}
+        >
+          <Sparkles className="w-4 h-4 text-amber-400" />
+          <span>مهمات الدرع اليومية ({missionStats?.totalMissionsCompleted || 0})</span>
         </button>
 
         <button
@@ -1121,8 +1137,14 @@ export const TeacherDashboard: React.FC<TeacherDashboardProps> = ({
               <div className="text-center space-y-1.5">
                 <div className="relative inline-block">
                   <img
-                    src="/src/assets/images/shield_of_nation_hero_1792473197101.jpg"
+                    src={heroShieldImg}
                     alt="شعار مبادرة درع الوطن"
+                    onError={(e) => {
+                      const target = e.currentTarget;
+                      if (!target.src.includes('public')) {
+                        target.src = '/assets/images/shield_of_nation_hero_1792473197101.jpg';
+                      }
+                    }}
                     className="w-16 h-16 rounded-full object-cover border-2 border-amber-500 shadow-md mx-auto"
                   />
                 </div>
@@ -1313,6 +1335,167 @@ export const TeacherDashboard: React.FC<TeacherDashboardProps> = ({
             <div className="text-center pt-4 text-[10px] text-slate-400 border-t border-slate-100 flex flex-wrap items-center justify-between gap-2">
               <span>الثانوية الأولى بالبدع · مبادرة درع الوطن · المادة 34 من النظام الأساسي للحكم</span>
               <span>وثيقة رسمية صادرة من المنصة السحابية المدرسية</span>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* TAB 5: DAILY MISSIONS & BADGES MONITORING */}
+      {activeTab === 'missions' && (
+        <div className="space-y-6">
+          {/* Top Panel Header */}
+          <div className="p-6 rounded-3xl bg-radial from-emerald-950 via-emerald-900 to-slate-950 text-white shadow-lg border border-amber-400/40 flex flex-col md:flex-row items-center justify-between gap-4">
+            <div className="space-y-1 text-right">
+              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-400/10 border border-amber-400/30 text-amber-300 text-xs font-bold">
+                <Sparkles className="w-3.5 h-3.5" />
+                <span>رصد المهمات والأوسمة التفاعلية</span>
+              </div>
+              <h3 className="text-xl sm:text-2xl font-black text-white font-calligraphy">
+                مُتَابَعَةُ «مَهَمَّاتِ دِرْعِ الوَطَن اليَومِيَّة»
+              </h3>
+              <p className="text-xs text-emerald-200/90 font-medium">
+                لوحة الرصد والتقييم للمعلمتين: أمل رشيد + وفاء الزهراني · الثانوية الأولى بالبدع
+              </p>
+            </div>
+
+            <a
+              href={api.getMissionsExportCsvUrl()}
+              download
+              className="px-4 py-2.5 rounded-xl bg-gradient-to-r from-amber-400 to-amber-500 hover:from-amber-300 hover:to-amber-400 text-emerald-950 font-bold text-xs flex items-center gap-2 shadow-md transition-all cursor-pointer border border-amber-200"
+            >
+              <FileDown className="w-4 h-4" />
+              <span>تصدير سجل المهمات (Excel CSV)</span>
+            </a>
+          </div>
+
+          {/* KPI Statistics Overview */}
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+            <div className="p-5 rounded-2xl bg-white border border-slate-200 shadow-xs space-y-1 text-right">
+              <span className="text-xs font-semibold text-slate-500 block">إجمالي المهمات المكتملة</span>
+              <div className="text-3xl font-black text-emerald-800 font-mono">
+                {missionStats?.totalMissionsCompleted || 0}
+              </div>
+              <span className="text-[10px] text-emerald-600 font-medium">تحديات يومية تم إنجازها</span>
+            </div>
+
+            <div className="p-5 rounded-2xl bg-white border border-slate-200 shadow-xs space-y-1 text-right">
+              <span className="text-xs font-semibold text-slate-500 block">إجمالي نقاط الدرع الممنوحة</span>
+              <div className="text-3xl font-black text-amber-600 font-mono">
+                {missionStats?.totalShieldPointsAwarded || 0}
+              </div>
+              <span className="text-[10px] text-amber-600 font-medium">نقاط تفاعلية مستحقة</span>
+            </div>
+
+            <div className="p-5 rounded-2xl bg-white border border-slate-200 shadow-xs space-y-1 text-right">
+              <span className="text-xs font-semibold text-slate-500 block">الطالبات المتفاعلات</span>
+              <div className="text-3xl font-black text-blue-700 font-mono">
+                {missionStats?.activeStudentsCount || 0}
+              </div>
+              <span className="text-[10px] text-blue-600 font-medium">مشاركات في التحدي</span>
+            </div>
+
+            <div className="p-5 rounded-2xl bg-white border border-slate-200 shadow-xs space-y-1 text-right">
+              <span className="text-xs font-semibold text-slate-500 block">صناديق المفاجآت المفتوحة</span>
+              <div className="text-3xl font-black text-purple-700 font-mono">
+                {missionStats?.weeklyBoxesClaimedCount || 0}
+              </div>
+              <span className="text-[10px] text-purple-600 font-medium">مكافآت أسبوعية محققة</span>
+            </div>
+          </div>
+
+          {/* Class Breakdown & Badges Grid */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* Class Breakdown Table */}
+            <div className="p-6 rounded-2xl bg-white border border-slate-200 shadow-sm space-y-4 text-right">
+              <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+                <div className="flex items-center gap-2">
+                  <Users className="w-5 h-5 text-emerald-700" />
+                  <h4 className="font-extrabold text-sm text-slate-900">
+                    توزيع إنجاز المهمات حسب الفصول الدراسية
+                  </h4>
+                </div>
+                <span className="text-[11px] font-bold text-emerald-800 bg-emerald-50 px-2.5 py-0.5 rounded-full border border-emerald-200">
+                  تحدي جماعي تعاوني
+                </span>
+              </div>
+
+              <div className="overflow-x-auto">
+                <table className="w-full text-xs text-right border-collapse">
+                  <thead>
+                    <tr className="bg-slate-50 text-slate-700 font-bold border-b border-slate-200">
+                      <th className="p-3">الفصل الدراسي</th>
+                      <th className="p-3 text-center">المهمات المكتملة</th>
+                      <th className="p-3 text-center">مجموع النقاط</th>
+                      <th className="p-3 text-center">عدد الطالبات</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100">
+                    {(missionStats?.classBreakdown || []).map((cb) => (
+                      <tr key={cb.grade} className="hover:bg-slate-50">
+                        <td className="p-3 font-bold text-slate-900">{cb.grade}</td>
+                        <td className="p-3 text-center font-mono font-bold text-emerald-800">
+                          {cb.completedCount}
+                        </td>
+                        <td className="p-3 text-center font-mono font-bold text-amber-600">
+                          {cb.points}
+                        </td>
+                        <td className="p-3 text-center font-mono text-slate-700">
+                          {cb.studentsCount}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+
+              <div className="p-3 rounded-xl bg-amber-50 border border-amber-200 text-[11px] text-amber-900 leading-relaxed font-medium">
+                ملاحظة توجيهية: يُعرض إنجاز كل فصل بصيغة تعزز روح الفريق والتعاون البنّاء بين الطالبات دون إظهار أي ترتيب سلبي.
+              </div>
+            </div>
+
+            {/* Badges Distribution */}
+            <div className="p-6 rounded-2xl bg-white border border-slate-200 shadow-sm space-y-4 text-right">
+              <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+                <div className="flex items-center gap-2">
+                  <Award className="w-5 h-5 text-amber-500" />
+                  <h4 className="font-extrabold text-sm text-slate-900">
+                    إحصائية الأوسمة الرقمية المكتسبة
+                  </h4>
+                </div>
+                <span className="text-[11px] font-bold text-slate-500">
+                  تُمنح آلياً فور إنجاز المهام
+                </span>
+              </div>
+
+              <div className="space-y-3">
+                {(missionStats?.topBadgesAwarded || []).map((badge) => (
+                  <div
+                    key={badge.badgeId}
+                    className="p-3.5 rounded-xl bg-slate-50 border border-slate-200 flex items-center justify-between gap-3"
+                  >
+                    <div className="flex items-center gap-2.5">
+                      <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-amber-400 to-amber-600 text-emerald-950 flex items-center justify-center font-bold text-xs shadow-xs">
+                        <Award className="w-4 h-4" />
+                      </div>
+                      <div>
+                        <span className="font-extrabold text-xs text-slate-900 block">
+                          وسام «{badge.badgeTitle}»
+                        </span>
+                        <span className="text-[10px] text-slate-500">
+                          معتمد في منصة درع الوطن بالثانوية الأولى بالبدع
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className="text-left">
+                      <span className="text-lg font-black text-emerald-800 font-mono">
+                        {badge.count}
+                      </span>
+                      <span className="text-[10px] text-slate-400 block">طالبة حائزة</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
         </div>

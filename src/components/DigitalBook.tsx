@@ -1,9 +1,11 @@
 import React, { useState } from 'react';
 import { BookOpen, ChevronRight, ChevronLeft, Shield, Sparkles, Bookmark, Maximize2 } from 'lucide-react';
+import bookCoverImg from '../assets/images/digital_book_cover_1792473213274.jpg';
 
 export const DigitalBook: React.FC = () => {
   const [currentPage, setCurrentPage] = useState<number>(0);
   const [isFullscreen, setIsFullscreen] = useState(false);
+  const [coverSrc, setCoverSrc] = useState<string>(bookCoverImg);
 
   const bookPages = [
     // Page 0: Cover
@@ -16,9 +18,17 @@ export const DigitalBook: React.FC = () => {
             <div className="relative group">
               <div className="absolute -inset-1 bg-amber-400/30 rounded-2xl blur-lg group-hover:blur-xl transition duration-300" />
               <img
-                src="/src/assets/images/digital_book_cover_1792473213274.jpg"
+                src={coverSrc}
                 alt="غلاف كتاب درع الوطن"
                 referrerPolicy="no-referrer"
+                onError={(e) => {
+                  const target = e.currentTarget;
+                  if (!target.src.includes('assets/images')) {
+                    target.src = '/assets/images/digital_book_cover_1792473213274.jpg';
+                  } else if (!target.src.includes('public/images')) {
+                    target.src = '/images/digital_book_cover_1792473213274.jpg';
+                  }
+                }}
                 className="relative w-64 sm:w-72 rounded-xl shadow-2xl border-2 border-amber-400/70 transform -rotate-1 group-hover:rotate-0 transition-transform duration-300"
               />
             </div>

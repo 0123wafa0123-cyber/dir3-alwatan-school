@@ -76,11 +76,34 @@ interface Teacher {
   school: string;
 }
 
+interface StudentMissionCompletion {
+  id: string;
+  studentName: string;
+  grade: string;
+  missionId: string;
+  missionTitle: string;
+  dateStr: string; // YYYY-MM-DD
+  pointsEarned: number;
+  isCorrect: boolean;
+  completedAt: string;
+}
+
+interface ClaimedWeeklyBox {
+  id: string;
+  studentName: string;
+  grade: string;
+  weekKey: string;
+  bonusPoints: number;
+  claimedAt: string;
+}
+
 interface DatabaseState {
   submissions: Submission[];
   surveys: SurveyRecord[];
   badges: StudentBadge[];
   teachers: Teacher[];
+  missionCompletions: StudentMissionCompletion[];
+  claimedBoxes: ClaimedWeeklyBox[];
 }
 
 function getInitialDb(): DatabaseState {
@@ -88,6 +111,8 @@ function getInitialDb(): DatabaseState {
     submissions: [],
     surveys: [],
     badges: [],
+    missionCompletions: [],
+    claimedBoxes: [],
     teachers: [
       {
         id: 'teacher-1',
@@ -121,6 +146,8 @@ function loadDb(): DatabaseState {
     if (!data.teachers || data.teachers.length === 0) {
       data.teachers = getInitialDb().teachers;
     }
+    if (!data.missionCompletions) data.missionCompletions = [];
+    if (!data.claimedBoxes) data.claimedBoxes = [];
     return data;
   } catch (err) {
     console.error('Error loading db file, resetting to clean:', err);
@@ -649,6 +676,52 @@ app.get('/api/badges', (req, res) => {
   });
 });
 
+// Get badges for a specific student with automatic milestones evaluation
+app.get('/api/badges/student', (req, res) => {
+  const { name, grade } = req.query;
+  const db = loadDb();
+  if (!name) {
+    res.json({ total: 0, badges: [] });
+    return;
+  }
+  const cleanName = String(name).trim().toLowerCase();
+  const cleanGrade = grade ? String(grade).trim().toLowerCase() : '';
+
+  let studentBadges = db.badges.filter((b) => {
+    const matchName = b.studentName.toLowerCase() === cleanName;
+    if (!cleanGrade) return matchName;
+    return matchName && b.grade.toLowerCase() === cleanGrade;
+  });
+
+  // Evaluate Grand Shield Master milestone
+  const hasSubmission = db.submissions.some((s) => s.studentName.toLowerCase() === cleanName);
+  const hasSurveys = db.surveys.some((s) => s.studentName.toLowerCase() === cleanName);
+  const hasGrandBadge = studentBadges.some((b) => b.badgeId === 'grand_shield_master');
+
+  if (hasSubmission && hasSurveys && !hasGrandBadge) {
+    const grandBadge: StudentBadge = {
+      id: `BDG-GRAND-${Date.now().toString(36)}`,
+      studentName: String(name).trim(),
+      grade: grade ? String(grade).trim() : 'المرحلة الثانوية',
+      badgeId: 'grand_shield_master',
+      badgeTitle: 'وسام درع الوطن الذهبي الشامل',
+      iconName: 'Crown',
+      reason: 'التميز الوطني المتكامل وإتمام محاور الاستبانة والمشاركات في مبادرة درع الوطن',
+      awardedAt: new Date().toISOString()
+    };
+    db.badges.push(grandBadge);
+    saveDb(db);
+    studentBadges.push(grandBadge);
+  }
+
+  res.json({
+    studentName: name,
+    grade,
+    total: studentBadges.length,
+    badges: studentBadges
+  });
+});
+
 // 6. Upload API (for canvas drawings and files)
 app.post('/api/upload', (req, res) => {
   const { dataUrl, filename } = req.body;
@@ -712,6 +785,415 @@ app.get('/api/export/csv', requireTeacherAuth, (req, res) => {
 
   res.setHeader('Content-Type', 'text/csv; charset=utf-8');
   res.setHeader('Content-Disposition', `attachment; filename="deraa_alwatan_submissions_${new Date().toISOString().slice(0, 10)}.csv"`);
+  res.status(200).send(csv);
+});
+
+// ----------------- DAILY SHIELD MISSIONS API -----------------
+
+function getWeekKey(dateStr?: string): string {
+  const d = dateStr ? new Date(dateStr) : new Date();
+  d.setHours(0, 0, 0, 0);
+  d.setDate(d.getDate() + 3 - (d.getDay() + 6) % 7);
+  const week1 = new Date(d.getFullYear(), 0, 4);
+  const weekNum = 1 + Math.round(((d.getTime() - week1.getTime()) / 86400000 - 3 + (week1.getDay() + 6) % 7) / 7);
+  return `${d.getFullYear()}-W${weekNum}`;
+}
+
+// Complete Daily Mission
+app.post('/api/missions/complete', (req, res) => {
+  const { studentName, grade, missionId, missionTitle, points, isCorrect, dateStr } = req.body;
+
+  if (!studentName || !grade || !missionId) {
+    res.status(400).json({ error: 'بيانات المهمة غير مكتملة' });
+    return;
+  }
+
+  const cleanName = String(studentName).trim();
+  const cleanGrade = String(grade).trim();
+  const todayDate = dateStr || new Date().toISOString().slice(0, 10);
+
+  const db = loadDb();
+
+  // Check if student already completed this mission on this day (No repeating same day)
+  const alreadyDone = db.missionCompletions.some(
+    (m) =>
+      m.studentName.toLowerCase() === cleanName.toLowerCase() &&
+      m.grade.toLowerCase() === cleanGrade.toLowerCase() &&
+      m.dateStr === todayDate
+  );
+
+  if (alreadyDone) {
+    res.json({
+      success: false,
+      alreadyCompleted: true,
+      message: 'لقد أكملتِ مهمة اليوم بالفعل! تعالي غداً لاكتشاف التحدي الجديد والمساهمة في درع فصلكِ.'
+    });
+    return;
+  }
+
+  const completionPoints = isCorrect ? (points || 25) : Math.round((points || 25) / 2);
+  const newCompletion: StudentMissionCompletion = {
+    id: `MIS-${Date.now().toString(36)}-${Math.random().toString(36).substring(2, 6)}`,
+    studentName: cleanName,
+    grade: cleanGrade,
+    missionId,
+    missionTitle: missionTitle || 'مهمة درع الوطن اليومية',
+    dateStr: todayDate,
+    pointsEarned: completionPoints,
+    isCorrect: !!isCorrect,
+    completedAt: new Date().toISOString()
+  };
+
+  db.missionCompletions.push(newCompletion);
+
+  // Check for Milestone Badges:
+  // 1. «سفيرة الوعي»
+  // 2. «حامية القيم»
+  // 3. «نجمة المشاركة»
+  // 4. «صانعة الأثر»
+  const studentCompletions = db.missionCompletions.filter(
+    (m) => m.studentName.toLowerCase() === cleanName.toLowerCase() && m.grade.toLowerCase() === cleanGrade.toLowerCase()
+  );
+
+  const studentBadges = db.badges.filter(
+    (b) => b.studentName.toLowerCase() === cleanName.toLowerCase() && b.grade.toLowerCase() === cleanGrade.toLowerCase()
+  );
+
+  const awardedBadges: StudentBadge[] = [];
+
+  const awardBadgeIfMissing = (badgeId: string, badgeTitle: string, iconName: string, reason: string) => {
+    if (!studentBadges.some((b) => b.badgeId === badgeId)) {
+      const newBadge: StudentBadge = {
+        id: `BDG-${Date.now().toString(36)}-${Math.random().toString(36).substring(2, 6)}`,
+        studentName: cleanName,
+        grade: cleanGrade,
+        badgeId,
+        badgeTitle,
+        iconName,
+        reason,
+        awardedAt: new Date().toISOString()
+      };
+      db.badges.push(newBadge);
+      studentBadges.push(newBadge);
+      awardedBadges.push(newBadge);
+    }
+  };
+
+  if (studentCompletions.length >= 1) {
+    awardBadgeIfMissing(
+      'ambassador_awareness',
+      'سفيرة الوعي',
+      'Compass',
+      'اجتياز مهمة الوعي الدستوري وإتقان مضامين المادة 34 من النظام الأساسي للحكم'
+    );
+  }
+
+  if (studentCompletions.length >= 2) {
+    awardBadgeIfMissing(
+      'values_guardian',
+      'حامية القيم',
+      'Shield',
+      'إكمال مهمات التصدي للشائعات الرقمية وصيانة قيم المجتمع وثوابته الوطنية'
+    );
+  }
+
+  if (studentCompletions.length >= 3) {
+    awardBadgeIfMissing(
+      'participation_star',
+      'نجمة المشاركة',
+      'Star',
+      'المثابرة والاستمرارية في إنجاز 3 مهمات من مهمات درع الوطن اليومية'
+    );
+  }
+
+  if (studentCompletions.length >= 5) {
+    awardBadgeIfMissing(
+      'impact_maker',
+      'صانعة الأثر',
+      'Award',
+      'تحقيق ريادة استثنائية في مهمات درع الوطن والمساهمة الفاعلة في دعم الفصل والمدرسة'
+    );
+  }
+
+  saveDb(db);
+
+  // Calculate current week count
+  const currentWeekKey = getWeekKey(todayDate);
+  const weeklyMissions = studentCompletions.filter((m) => getWeekKey(m.dateStr) === currentWeekKey);
+  const hasClaimedWeeklyBox = db.claimedBoxes.some(
+    (c) => c.studentName.toLowerCase() === cleanName.toLowerCase() && c.weekKey === currentWeekKey
+  );
+
+  res.json({
+    success: true,
+    completion: newCompletion,
+    pointsEarned: completionPoints,
+    totalMissions: studentCompletions.length,
+    newBadges: awardedBadges,
+    weeklyMissionsCount: weeklyMissions.length,
+    canClaimWeeklyBox: weeklyMissions.length >= 3 && !hasClaimedWeeklyBox
+  });
+});
+
+// Get Student Daily Missions Progress
+app.get('/api/missions/student', (req, res) => {
+  const { name, grade } = req.query;
+  if (!name) {
+    res.json({
+      totalPoints: 0,
+      completedMissionsCount: 0,
+      completedDates: [],
+      currentStreak: 0,
+      unlockedBadges: [],
+      unlockedStations: 1,
+      weeklyBoxClaimed: false,
+      weeklyMissionsCount: 0,
+      completions: []
+    });
+    return;
+  }
+
+  const cleanName = String(name).trim().toLowerCase();
+  const cleanGrade = grade ? String(grade).trim().toLowerCase() : '';
+
+  const db = loadDb();
+
+  const studentCompletions = db.missionCompletions.filter((m) => {
+    const match = m.studentName.toLowerCase() === cleanName;
+    if (!cleanGrade) return match;
+    return match && m.grade.toLowerCase() === cleanGrade;
+  });
+
+  const todayStr = new Date().toISOString().slice(0, 10);
+  const completedToday = studentCompletions.some((m) => m.dateStr === todayStr);
+
+  const totalMissionPoints = studentCompletions.reduce((acc, c) => acc + (c.pointsEarned || 0), 0);
+
+  const currentWeekKey = getWeekKey(todayStr);
+  const weeklyBoxRecord = db.claimedBoxes.find(
+    (c) => c.studentName.toLowerCase() === cleanName && c.weekKey === currentWeekKey
+  );
+
+  const boxBonusPoints = db.claimedBoxes
+    .filter((c) => c.studentName.toLowerCase() === cleanName)
+    .reduce((acc, c) => acc + (c.bonusPoints || 0), 0);
+
+  const totalPoints = totalMissionPoints + boxBonusPoints;
+
+  const weeklyMissions = studentCompletions.filter((m) => getWeekKey(m.dateStr) === currentWeekKey);
+
+  // Compute stations unlocked (stations 1 to 6)
+  // Station 1: 0, Station 2: 40, Station 3: 80, Station 4: 120, Station 5: 160, Station 6: 200
+  let unlockedStations = 1;
+  if (totalPoints >= 200) unlockedStations = 6;
+  else if (totalPoints >= 160) unlockedStations = 5;
+  else if (totalPoints >= 120) unlockedStations = 4;
+  else if (totalPoints >= 80) unlockedStations = 3;
+  else if (totalPoints >= 40) unlockedStations = 2;
+
+  // Compute streak
+  const sortedDates = Array.from(new Set(studentCompletions.map((c) => c.dateStr))).sort().reverse();
+  let currentStreak = 0;
+  if (sortedDates.length > 0) {
+    let checkDate = new Date();
+    if (!completedToday) {
+      // Allow yesterday's completion to keep streak alive
+      checkDate.setDate(checkDate.getDate() - 1);
+    }
+    for (const dStr of sortedDates) {
+      const expected = checkDate.toISOString().slice(0, 10);
+      if (dStr === expected) {
+        currentStreak++;
+        checkDate.setDate(checkDate.getDate() - 1);
+      } else {
+        break;
+      }
+    }
+  }
+
+  res.json({
+    studentName: name,
+    grade,
+    totalPoints,
+    completedMissionsCount: studentCompletions.length,
+    completedToday,
+    completedDates: sortedDates,
+    currentStreak,
+    unlockedStations,
+    weeklyBoxClaimed: !!weeklyBoxRecord,
+    weeklyMissionsCount: weeklyMissions.length,
+    canClaimWeeklyBox: weeklyMissions.length >= 3 && !weeklyBoxRecord,
+    completions: studentCompletions
+  });
+});
+
+// Claim Weekly Surprise Box
+app.post('/api/missions/claim-box', (req, res) => {
+  const { studentName, grade } = req.body;
+  if (!studentName || !grade) {
+    res.status(400).json({ error: 'الاسم والفصل مطلوبان' });
+    return;
+  }
+
+  const cleanName = String(studentName).trim();
+  const cleanGrade = String(grade).trim();
+  const todayStr = new Date().toISOString().slice(0, 10);
+  const currentWeekKey = getWeekKey(todayStr);
+
+  const db = loadDb();
+
+  const studentCompletions = db.missionCompletions.filter(
+    (m) => m.studentName.toLowerCase() === cleanName.toLowerCase() && m.grade.toLowerCase() === cleanGrade.toLowerCase()
+  );
+
+  const weeklyMissions = studentCompletions.filter((m) => getWeekKey(m.dateStr) === currentWeekKey);
+
+  if (weeklyMissions.length < 3) {
+    res.status(400).json({
+      error: `تحتاجين لإكمال 3 مهمات على الأقل هذا الأسبوع لفتح الصندوق (أكملتِ ${weeklyMissions.length} مهمات).`
+    });
+    return;
+  }
+
+  const alreadyClaimed = db.claimedBoxes.some(
+    (c) => c.studentName.toLowerCase() === cleanName.toLowerCase() && c.weekKey === currentWeekKey
+  );
+
+  if (alreadyClaimed) {
+    res.status(400).json({ error: 'تم فتح صندوق هذا الأسبوع مسبقاً! ترقبي صندوق الأسبوع القادم.' });
+    return;
+  }
+
+  const bonusPoints = 50;
+  const newClaim: ClaimedWeeklyBox = {
+    id: `BOX-${Date.now().toString(36)}`,
+    studentName: cleanName,
+    grade: cleanGrade,
+    weekKey: currentWeekKey,
+    bonusPoints,
+    claimedAt: new Date().toISOString()
+  };
+
+  db.claimedBoxes.push(newClaim);
+  saveDb(db);
+
+  res.json({
+    success: true,
+    bonusPoints,
+    message: 'مبارك يا بطلة درع الوطن! فتحتِ صندوق مفاجآت الأسبوع بنجاح ونلتِ 50 نقطة درع إضافية وشهادة فخر من المعلمتين أمل رشيد ووفاء الزهراني!'
+  });
+});
+
+// Class Collaborative Progress (Encouraging teamwork, zero shaming)
+app.get('/api/missions/classes-progress', (req, res) => {
+  const db = loadDb();
+  const targetPerClass = 50; // Collective milestone goal
+
+  const grades = [
+    { label: 'الصف الأول ثانوي', match: (g: string) => g.includes('أول') || g.includes('اول') },
+    { label: 'الصف الثاني ثانوي', match: (g: string) => g.includes('ثاني') },
+    { label: 'الصف الثالث ثانوي', match: (g: string) => g.includes('ثالث') }
+  ];
+
+  const progress = grades.map(({ label, match }) => {
+    const classCompletions = db.missionCompletions.filter((m) => match(m.grade.trim()));
+    const count = classCompletions.length;
+    const points = classCompletions.reduce((acc, c) => acc + (c.pointsEarned || 0), 0);
+    const percentage = Math.min(100, Math.round((count / targetPerClass) * 100));
+
+    let tier: 'برونزي' | 'فضي' | 'ذهبي' | 'ألماسي' = 'برونزي';
+    if (percentage >= 100) tier = 'ألماسي';
+    else if (percentage >= 75) tier = 'ذهبي';
+    else if (percentage >= 50) tier = 'فضي';
+
+    return {
+      grade: label,
+      targetMissions: targetPerClass,
+      completedMissions: count,
+      totalPoints: points,
+      percentage,
+      tier
+    };
+  });
+
+  res.json({
+    targetPerClass,
+    classes: progress
+  });
+});
+
+// Teacher Missions Statistics (for Amal Rashid & Wafa Al-Zahrani)
+app.get('/api/missions/teacher-stats', (req, res) => {
+  const db = loadDb();
+
+  const totalMissionsCompleted = db.missionCompletions.length;
+  const totalShieldPointsAwarded = db.missionCompletions.reduce((acc, m) => acc + (m.pointsEarned || 0), 0) +
+    db.claimedBoxes.reduce((acc, b) => acc + (b.bonusPoints || 0), 0);
+
+  const uniqueStudents = new Set(db.missionCompletions.map((m) => `${m.studentName.toLowerCase()}__${m.grade.toLowerCase()}`));
+
+  const grades = [
+    { label: 'الصف الأول ثانوي', match: (g: string) => g.includes('أول') || g.includes('اول') },
+    { label: 'الصف الثاني ثانوي', match: (g: string) => g.includes('ثاني') },
+    { label: 'الصف الثالث ثانوي', match: (g: string) => g.includes('ثالث') }
+  ];
+
+  const classBreakdown = grades.map(({ label, match }) => {
+    const completions = db.missionCompletions.filter((m) => match(m.grade.trim()));
+    const students = new Set(completions.map((m) => m.studentName.toLowerCase()));
+    return {
+      grade: label,
+      completedCount: completions.length,
+      points: completions.reduce((acc, c) => acc + (c.pointsEarned || 0), 0),
+      studentsCount: students.size
+    };
+  });
+
+  const topBadges = ['ambassador_awareness', 'values_guardian', 'participation_star', 'impact_maker'];
+  const topBadgesAwarded = topBadges.map((badgeId) => {
+    const count = db.badges.filter((b) => b.badgeId === badgeId).length;
+    let title = 'وسام وطني';
+    if (badgeId === 'ambassador_awareness') title = 'سفيرة الوعي';
+    if (badgeId === 'values_guardian') title = 'حامية القيم';
+    if (badgeId === 'participation_star') title = 'نجمة المشاركة';
+    if (badgeId === 'impact_maker') title = 'صانعة الأثر';
+    return { badgeId, badgeTitle: title, count };
+  });
+
+  res.json({
+    totalMissionsCompleted,
+    totalShieldPointsAwarded,
+    activeStudentsCount: uniqueStudents.size,
+    weeklyBoxesClaimedCount: db.claimedBoxes.length,
+    classBreakdown,
+    recentCompletions: db.missionCompletions.slice(-15).reverse(),
+    topBadgesAwarded
+  });
+});
+
+// Missions CSV Export for Teachers
+app.get('/api/export/missions-csv', requireTeacherAuth, (req, res) => {
+  const db = loadDb();
+
+  let csv = '\uFEFF';
+  csv += 'رقم المهمة,اسم الطالبة,الفصل الدراسي,عنوان المهمة,النقاط المكتسبة,حالة الإجابة,تاريخ الإنجاز,وقت الإنجاز\r\n';
+
+  for (const m of db.missionCompletions) {
+    const row = [
+      `"${m.id}"`,
+      `"${m.studentName.replace(/"/g, '""')}"`,
+      `"${m.grade.replace(/"/g, '""')}"`,
+      `"${m.missionTitle.replace(/"/g, '""')}"`,
+      `${m.pointsEarned}`,
+      `"${m.isCorrect ? 'صحيحة' : 'تحتاج مراجعة'}"`,
+      `"${m.dateStr}"`,
+      `"${new Date(m.completedAt).toLocaleString('ar-SA')}"`
+    ];
+    csv += row.join(',') + '\r\n';
+  }
+
+  res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+  res.setHeader('Content-Disposition', `attachment; filename="deraa_missions_report_${new Date().toISOString().slice(0, 10)}.csv"`);
   res.status(200).send(csv);
 });
 

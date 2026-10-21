@@ -28,23 +28,60 @@ import {
   Info,
   Eye,
   EyeOff,
-  Check
+  Check,
+  Share2,
+  MessageCircle
 } from 'lucide-react';
+import { StudentBadge } from '../types';
+import { ShareBadgeModal } from './ShareBadgeModal';
 
 interface StudentPortalProps {
   initialSection?: 'text' | 'drawing' | 'survey' | 'quiz' | 'certificate';
+  onGoToDailyMission?: () => void;
 }
 
 import { SCHOOL_GRADES } from '../constants/grades';
 import { SHIELD_TEMPLATES } from '../constants/templates';
 import { ShieldTextCard } from './ShieldTextCard';
 
-export const StudentPortal: React.FC<StudentPortalProps> = ({ initialSection = 'text' }) => {
+export const StudentPortal: React.FC<StudentPortalProps> = ({ initialSection = 'text', onGoToDailyMission }) => {
   const [activeSubTab, setActiveSubTab] = useState<'text' | 'drawing' | 'survey' | 'quiz' | 'certificate'>(initialSection);
 
   // Global student identity in this session
   const [studentName, setStudentName] = useState<string>('');
   const [grade, setGrade] = useState<string>(SCHOOL_GRADES[0]);
+
+  // Digital Badges & Social Sharing State
+  const [studentBadgesList, setStudentBadgesList] = useState<StudentBadge[]>([]);
+  const [isShareModalOpen, setIsShareModalOpen] = useState(false);
+  const [selectedBadgeForShare, setSelectedBadgeForShare] = useState<StudentBadge | null>(null);
+  const [newlyAwardedBadgeAlert, setNewlyAwardedBadgeAlert] = useState<StudentBadge | null>(null);
+
+  // Helper to refresh badges from cloud
+  const refreshStudentBadges = async (name: string, studentGrade: string) => {
+    if (!name.trim()) {
+      setStudentBadgesList([]);
+      return;
+    }
+    try {
+      const res = await api.getStudentBadges(name.trim(), studentGrade);
+      setStudentBadgesList(res.badges || []);
+    } catch (err) {
+      console.warn('Failed to load student badges:', err);
+    }
+  };
+
+  // Auto-fetch badges when student enters their name
+  useEffect(() => {
+    if (studentName.trim().length >= 2) {
+      const timer = setTimeout(() => {
+        refreshStudentBadges(studentName, grade);
+      }, 500);
+      return () => clearTimeout(timer);
+    } else {
+      setStudentBadgesList([]);
+    }
+  }, [studentName, grade]);
 
   // Loading and feedback states
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -409,7 +446,7 @@ export const StudentPortal: React.FC<StudentPortalProps> = ({ initialSection = '
 
       // Award badge if first text participation (non-fatal if already awarded)
       try {
-        await api.awardBadge({
+        const badgeRes = await api.awardBadge({
           studentName: studentName.trim(),
           grade,
           badgeId: 'patriotic_voice',
@@ -417,6 +454,11 @@ export const StudentPortal: React.FC<StudentPortalProps> = ({ initialSection = '
           iconName: 'PenTool',
           reason: 'تقديم مشاركة نصية مميزة في منصة درع الوطن'
         });
+        if (badgeRes.badge) {
+          setNewlyAwardedBadgeAlert(badgeRes.badge);
+          setSelectedBadgeForShare(badgeRes.badge);
+        }
+        refreshStudentBadges(studentName.trim(), grade);
       } catch (badgeErr) {
         console.warn('Badge award non-fatal:', badgeErr);
       }
@@ -479,7 +521,7 @@ export const StudentPortal: React.FC<StudentPortalProps> = ({ initialSection = '
 
       // Award creative badge (non-fatal if already awarded)
       try {
-        await api.awardBadge({
+        const badgeRes = await api.awardBadge({
           studentName: studentName.trim(),
           grade,
           badgeId: 'creative_shield',
@@ -487,6 +529,11 @@ export const StudentPortal: React.FC<StudentPortalProps> = ({ initialSection = '
           iconName: 'Sparkles',
           reason: 'رسم لوحة وطنية معبرة في مرسم درع الوطن'
         });
+        if (badgeRes.badge) {
+          setNewlyAwardedBadgeAlert(badgeRes.badge);
+          setSelectedBadgeForShare(badgeRes.badge);
+        }
+        refreshStudentBadges(studentName.trim(), grade);
       } catch (badgeErr) {
         console.warn('Badge auto-award non-fatal:', badgeErr);
       }
@@ -530,14 +577,23 @@ export const StudentPortal: React.FC<StudentPortalProps> = ({ initialSection = '
       setSurveySubmitted(true);
 
       // Award survey badge
-      await api.awardBadge({
-        studentName: studentName.trim(),
-        grade,
-        badgeId: surveyType === 'pre' ? 'pre_survey_badge' : 'post_survey_badge',
-        badgeTitle: surveyType === 'pre' ? 'وسام المبادرة والاستطلاع' : 'وسام الأثر والوعي المتكامل',
-        iconName: 'FileCheck2',
-        reason: `إكمال ${surveyType === 'pre' ? 'الاستبانة القبلية' : 'الاستبانة البعدية'} لقياس الأثر`
-      });
+      try {
+        const badgeRes = await api.awardBadge({
+          studentName: studentName.trim(),
+          grade,
+          badgeId: surveyType === 'pre' ? 'pre_survey_badge' : 'post_survey_badge',
+          badgeTitle: surveyType === 'pre' ? 'وسام المبادرة والاستطلاع' : 'وسام الأثر والوعي المتكامل',
+          iconName: 'FileCheck2',
+          reason: `إكمال ${surveyType === 'pre' ? 'الاستبانة القبلية' : 'الاستبانة البعدية'} لقياس الأثر`
+        });
+        if (badgeRes.badge) {
+          setNewlyAwardedBadgeAlert(badgeRes.badge);
+          setSelectedBadgeForShare(badgeRes.badge);
+        }
+        refreshStudentBadges(studentName.trim(), grade);
+      } catch (bErr) {
+        console.warn('Survey badge non-fatal:', bErr);
+      }
     } catch (err: any) {
       setErrorMessage(err.message || 'حدث خطأ أثناء حفظ الاستبانة');
     } finally {
@@ -618,7 +674,7 @@ export const StudentPortal: React.FC<StudentPortalProps> = ({ initialSection = '
     if (correctCount >= 3) {
       setAwardedBadge('وسام المعرفة الدستورية وحامية الوطن');
       try {
-        await api.awardBadge({
+        const badgeRes = await api.awardBadge({
           studentName: studentName.trim(),
           grade,
           badgeId: 'constitutional_scholar',
@@ -626,6 +682,12 @@ export const StudentPortal: React.FC<StudentPortalProps> = ({ initialSection = '
           iconName: 'Shield',
           reason: `اجتياز اختبار المادة 34 بنتيجة ${correctCount}/${quizQuestions.length}`
         });
+
+        if (badgeRes.badge) {
+          setNewlyAwardedBadgeAlert(badgeRes.badge);
+          setSelectedBadgeForShare(badgeRes.badge);
+        }
+        refreshStudentBadges(studentName.trim(), grade);
 
         // Record submission in database
         await api.createSubmission({
@@ -658,14 +720,23 @@ export const StudentPortal: React.FC<StudentPortalProps> = ({ initialSection = '
         content: `أعاهد الله تعالى أن أكون درعاً حامياً لعقيدتي الإسلامية ومجتمعي ووطني الغالي، ممتثلة للمادة 34، ومخلصة لمليكي وولي عهده الأمين.`
       });
 
-      await api.awardBadge({
-        studentName: studentName.trim(),
-        grade,
-        badgeId: 'pledge_guardian',
-        badgeTitle: 'شارة ميثاق الوفاء والعهد الوطني',
-        iconName: 'HeartHandshake',
-        reason: 'توقيع ميثاق درع الوطن والتعهد بالواجب الوطني'
-      });
+      try {
+        const badgeRes = await api.awardBadge({
+          studentName: studentName.trim(),
+          grade,
+          badgeId: 'pledge_guardian',
+          badgeTitle: 'شارة ميثاق الوفاء والعهد الوطني',
+          iconName: 'HeartHandshake',
+          reason: 'توقيع ميثاق درع الوطن والتعهد بالواجب الوطني'
+        });
+        if (badgeRes.badge) {
+          setNewlyAwardedBadgeAlert(badgeRes.badge);
+          setSelectedBadgeForShare(badgeRes.badge);
+        }
+        refreshStudentBadges(studentName.trim(), grade);
+      } catch (bErr) {
+        console.warn('Pledge badge non-fatal:', bErr);
+      }
 
       setPledgeSigned(true);
       setSuccessMessage('تم اعتماد توقيعكِ لميثاق درع الوطن وحفظه في السجل السحابي للمدرسة!');
@@ -720,7 +791,120 @@ export const StudentPortal: React.FC<StudentPortalProps> = ({ initialSection = '
             </div>
           </div>
         </div>
+
+        {/* Student Earned Badges Strip */}
+        {studentBadgesList.length > 0 && (
+          <div className="mt-5 pt-4 border-t border-emerald-800/80 flex flex-col sm:flex-row items-center justify-between gap-3">
+            <div className="flex flex-wrap items-center gap-2 text-xs">
+              <span className="font-bold text-amber-300 flex items-center gap-1">
+                <Award className="w-4 h-4 text-amber-400" />
+                <span>أوسمتكِ الرقمية المعتمدة ({studentBadgesList.length}):</span>
+              </span>
+              <div className="flex flex-wrap gap-1.5">
+                {studentBadgesList.map((b) => (
+                  <button
+                    key={b.id}
+                    type="button"
+                    onClick={() => {
+                      setSelectedBadgeForShare(b);
+                      setIsShareModalOpen(true);
+                    }}
+                    className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-400/20 hover:bg-amber-400/30 text-amber-200 hover:text-white border border-amber-400/40 text-[11px] font-bold cursor-pointer transition-all hover:scale-105"
+                  >
+                    <span>🎖️</span>
+                    <span>{b.badgeTitle}</span>
+                    <Share2 className="w-3 h-3 text-amber-300" />
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <button
+              type="button"
+              onClick={() => {
+                if (studentBadgesList.length > 0) {
+                  setSelectedBadgeForShare(studentBadgesList[0]);
+                  setIsShareModalOpen(true);
+                }
+              }}
+              className="px-4 py-2 rounded-xl bg-gradient-to-r from-amber-400 to-amber-500 hover:from-amber-300 hover:to-amber-400 text-emerald-950 font-bold text-xs flex items-center gap-2 shadow-md hover:shadow-lg cursor-pointer transition-all shrink-0"
+            >
+              <Share2 className="w-3.5 h-3.5" />
+              <span>مشاركة أوسمتي عبر منصات التواصل</span>
+            </button>
+          </div>
+        )}
       </div>
+
+      {/* Newly Awarded Badge Celebration Alert */}
+      {newlyAwardedBadgeAlert && (
+        <div className="p-4 sm:p-5 rounded-2xl bg-gradient-to-r from-amber-400 via-yellow-300 to-amber-400 text-emerald-950 shadow-xl border-2 border-amber-300 flex flex-col sm:flex-row items-center justify-between gap-4 animate-in slide-in-from-top duration-300">
+          <div className="flex items-center gap-3">
+            <div className="w-12 h-12 rounded-2xl bg-emerald-950 text-amber-400 flex items-center justify-center shrink-0 shadow-lg">
+              <Award className="w-7 h-7" />
+            </div>
+            <div>
+              <div className="flex items-center gap-1.5 text-xs font-bold text-emerald-950">
+                <Sparkles className="w-4 h-4 text-emerald-900" />
+                <span>مبارك لكِ! تم منحكِ وساماً رقمياً جديداً وتوثيقه سحابياً بنجاح:</span>
+              </div>
+              <h3 className="text-lg font-black text-emerald-950">
+                «{newlyAwardedBadgeAlert.badgeTitle}»
+              </h3>
+              <p className="text-xs text-emerald-950/80 font-medium">
+                {newlyAwardedBadgeAlert.reason}
+              </p>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2 w-full sm:w-auto justify-end">
+            <button
+              type="button"
+              onClick={() => {
+                setSelectedBadgeForShare(newlyAwardedBadgeAlert);
+                setIsShareModalOpen(true);
+              }}
+              className="px-5 py-2.5 rounded-xl bg-emerald-950 hover:bg-emerald-900 text-amber-300 font-bold text-xs flex items-center gap-2 shadow-md cursor-pointer transition-colors"
+            >
+              <Share2 className="w-4 h-4 text-amber-400" />
+              <span>شاركي وسامكِ الآن (واتساب / X)</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setNewlyAwardedBadgeAlert(null)}
+              className="px-3 py-2.5 rounded-xl bg-emerald-950/10 hover:bg-emerald-950/20 text-emerald-950 text-xs font-medium cursor-pointer"
+            >
+              إغلاق
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Daily Mission Invitation Banner */}
+      {onGoToDailyMission && (
+        <div className="p-4 rounded-2xl bg-gradient-to-r from-emerald-900 to-emerald-950 border border-amber-400/40 text-white flex flex-col sm:flex-row items-center justify-between gap-3 shadow-md">
+          <div className="flex items-center gap-3 text-right">
+            <div className="w-9 h-9 rounded-xl bg-amber-400 text-emerald-950 flex items-center justify-center font-black shrink-0 shadow-sm">
+              <Sparkles className="w-5 h-5" />
+            </div>
+            <div>
+              <span className="font-extrabold text-xs text-amber-300 block">
+                تحدي اليوم: «مَهَمَّةُ دِرْعِ الوَطَن اليَومِيَّة»
+              </span>
+              <span className="text-[11px] text-emerald-200">
+                سؤال وسيناريو يومي متجدد لاكتساب نقاط الدرع وشارات «سفيرة الوعي» وفتح صندوق المفاجآت الأسبوعي.
+              </span>
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={onGoToDailyMission}
+            className="w-full sm:w-auto px-4 py-2 rounded-xl bg-amber-400 hover:bg-amber-300 text-emerald-950 font-extrabold text-xs shadow-sm transition-all cursor-pointer whitespace-nowrap shrink-0"
+          >
+            خوض التحدي الآن ←
+          </button>
+        </div>
+      )}
 
       {/* Segmented Sub-Tabs */}
       <div className="grid grid-cols-2 sm:grid-cols-5 gap-2 p-1.5 bg-slate-100 rounded-2xl border border-slate-200">
@@ -1719,9 +1903,198 @@ export const StudentPortal: React.FC<StudentPortalProps> = ({ initialSection = '
         </div>
       )}
 
-      {/* TAB 4: INTERACTIVE QUIZ & CHARTER */}
+      {/* TAB 4: INTERACTIVE QUIZ, CHARTER & DIGITAL BADGES */}
       {activeSubTab === 'quiz' && (
-        <div className="space-y-6">
+        <div className="space-y-8">
+          {/* DIGITAL BADGES & ACHIEVEMENTS REGISTRY */}
+          <div className="p-6 sm:p-8 rounded-3xl bg-gradient-to-br from-emerald-950 via-emerald-900 to-slate-950 text-white border-2 border-amber-400/50 shadow-2xl relative overflow-hidden space-y-6">
+            <div className="absolute top-0 right-0 w-64 h-64 bg-amber-400/10 rounded-full blur-3xl pointer-events-none" />
+            <div className="absolute bottom-0 left-0 w-64 h-64 bg-emerald-400/10 rounded-full blur-3xl pointer-events-none" />
+
+            <div className="relative flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-emerald-800/80 pb-5">
+              <div className="space-y-1">
+                <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-400/20 text-amber-300 border border-amber-400/40 text-[11px] font-bold">
+                  <Shield className="w-3.5 h-3.5" />
+                  <span>الثانوية الأولى بالبدع · مبادرة درع الوطن</span>
+                </div>
+                <h3 className="text-xl sm:text-2xl font-black text-white font-calligraphy">
+                  لوحة الأوسمة الرقمية وسجل المنجزات الوطنية
+                </h3>
+                <p className="text-xs text-emerald-200/90 leading-relaxed max-w-xl">
+                  منظومة الشارات والأوسمة السحابية التي تمنح للطالبات تقديراً لوعيهن الدستوري ومشاركتهن الفاعلة، تحت إشراف المعلمتين: <strong className="text-amber-300">أمل رشيد + وفاء الزهراني</strong>.
+                </p>
+              </div>
+
+              <div className="flex flex-col sm:flex-row items-center gap-3">
+                <div className="px-4 py-2 rounded-2xl bg-white/10 backdrop-blur-xs border border-amber-400/30 text-center">
+                  <div className="text-[10px] text-emerald-200">الأوسمة المكتسبة</div>
+                  <div className="text-xl font-black text-amber-300">
+                    {studentBadgesList.length} <span className="text-xs font-normal text-white">/ 7</span>
+                  </div>
+                </div>
+
+                {studentBadgesList.length > 0 && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setSelectedBadgeForShare(studentBadgesList[0]);
+                      setIsShareModalOpen(true);
+                    }}
+                    className="px-5 py-3 rounded-2xl bg-gradient-to-r from-amber-400 to-amber-500 hover:from-amber-300 hover:to-amber-400 text-emerald-950 font-bold text-xs flex items-center gap-2 shadow-lg hover:shadow-xl transition-all cursor-pointer"
+                  >
+                    <Share2 className="w-4 h-4" />
+                    <span>مشاركة منجزاتي عبر وسائل التواصل</span>
+                  </button>
+                )}
+              </div>
+            </div>
+
+            {/* Badges Grid */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 relative">
+              {[
+                {
+                  id: 'grand_shield_master',
+                  title: 'وسام درع الوطن الذهبي الشامل',
+                  subtitle: 'الوسام الملكي الأسمى للمبادرة',
+                  desc: 'يُمنح تلقائياً للطالبة المتميزة عند إكمال الاستبانة والمشاركات الوطنية.',
+                  taskTab: 'text',
+                  taskText: 'شاركي في المنصة لإحراز الوسام',
+                  icon: '👑'
+                },
+                {
+                  id: 'constitutional_scholar',
+                  title: 'وسام المعرفة الدستورية وحامية الوطن',
+                  subtitle: 'اختبار الوعي بالمادة 34',
+                  desc: 'أجيبي عن 3 أسئلة صحيحة على الأقل في مسابقة المادة 34 أدناه.',
+                  taskTab: 'quiz',
+                  taskText: 'أجيبي عن مسابقة المادة 34 بالأسفل',
+                  icon: '🛡️'
+                },
+                {
+                  id: 'patriotic_voice',
+                  title: 'شارة الكلمة والولاء الوطني',
+                  subtitle: 'المشاركات النصية والخواطر',
+                  desc: 'سطري رسالة ولاء واعتزاز للوطن من خلال بوابة المشاركة النصية.',
+                  taskTab: 'text',
+                  taskText: 'انتقلي لكتابة رسالتكِ الوطنية',
+                  icon: '✍️'
+                },
+                {
+                  id: 'creative_shield',
+                  title: 'وسام الإبداع الفني الوطني',
+                  subtitle: 'المرسم الرقمي والتصاميم',
+                  desc: 'ارسمي لوحة وطنية معبرة أو صممي عملاً فنياً عبر المرسم الرقمي.',
+                  taskTab: 'drawing',
+                  taskText: 'انتقلي للمرسم الرقمي للتعبير',
+                  icon: '🎨'
+                },
+                {
+                  id: 'pledge_guardian',
+                  title: 'شارة ميثاق الوفاء والعهد الوطني',
+                  subtitle: 'وثيقة العهد والشرف',
+                  desc: 'وقّعي إلكترونياً على ميثاق الوفاء للدفاع عن العقيدة والمجتمع والوطن.',
+                  taskTab: 'quiz',
+                  taskText: 'وقّعي الميثاق الوطني بالأسفل',
+                  icon: '🤝'
+                },
+                {
+                  id: 'pre_survey_badge',
+                  title: 'وسام المبادرة والاستطلاع',
+                  subtitle: 'قياس الوعي القبلي',
+                  desc: 'شاركي في الاستبانة القبلية لقياس مستوى المعرفة بالمادة 34.',
+                  taskTab: 'survey',
+                  taskText: 'أكملي الاستبانة القبلية',
+                  icon: '📋'
+                },
+                {
+                  id: 'post_survey_badge',
+                  title: 'وسام الأثر والوعي المتكامل',
+                  subtitle: 'قياس الأثر البعدي',
+                  desc: 'أكملي الاستبانة البعدية لتوثيق نمو المعرفة والأثر الإيجابي للمبادرة.',
+                  taskTab: 'survey',
+                  taskText: 'أكملي الاستبانة البعدية',
+                  icon: '📈'
+                }
+              ].map((badgeDef) => {
+                const earned = studentBadgesList.find((b) => b.badgeId === badgeDef.id);
+                return (
+                  <div
+                    key={badgeDef.id}
+                    className={`p-4 rounded-2xl border transition-all duration-200 flex flex-col justify-between ${
+                      earned
+                        ? 'bg-gradient-to-br from-emerald-900/90 to-emerald-950/90 border-amber-400 shadow-md shadow-amber-400/10'
+                        : 'bg-white/5 border-emerald-800/50 opacity-80 hover:opacity-100'
+                    }`}
+                  >
+                    <div className="space-y-3">
+                      <div className="flex items-start justify-between gap-2">
+                        <div className="w-12 h-12 rounded-xl bg-white/10 border border-white/20 flex items-center justify-center text-2xl shadow-inner shrink-0">
+                          {badgeDef.icon}
+                        </div>
+                        {earned ? (
+                          <span className="inline-flex items-center gap-1 text-[10px] font-bold text-amber-300 bg-amber-400/20 border border-amber-400/40 px-2.5 py-0.5 rounded-full">
+                            <CheckCircle2 className="w-3 h-3 text-emerald-400" />
+                            <span>ممنوح وموثق ✓</span>
+                          </span>
+                        ) : (
+                          <span className="inline-flex items-center gap-1 text-[10px] text-slate-400 bg-black/30 border border-white/10 px-2.5 py-0.5 rounded-full">
+                            <span>غير مكتسب بعد 🔒</span>
+                          </span>
+                        )}
+                      </div>
+
+                      <div>
+                        <h4 className="text-sm font-bold text-white leading-snug">
+                          {badgeDef.title}
+                        </h4>
+                        <p className="text-[11px] text-amber-300/90 font-medium mt-0.5">
+                          {badgeDef.subtitle}
+                        </p>
+                        <p className="text-[11px] text-emerald-200/80 leading-relaxed mt-1.5">
+                          {badgeDef.desc}
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="mt-4 pt-3 border-t border-white/10">
+                      {earned ? (
+                        <div className="space-y-2">
+                          <div className="text-[10px] text-emerald-300/80 flex items-center justify-between">
+                            <span>تاريخ المنح:</span>
+                            <span>{new Date(earned.awardedAt).toLocaleDateString('ar-SA')}</span>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setSelectedBadgeForShare(earned);
+                              setIsShareModalOpen(true);
+                            }}
+                            className="w-full py-2 px-3 rounded-xl bg-gradient-to-r from-amber-400 to-amber-500 hover:from-amber-300 hover:to-amber-400 text-emerald-950 font-bold text-xs flex items-center justify-center gap-1.5 shadow-sm cursor-pointer transition-all hover:scale-[1.02]"
+                          >
+                            <Share2 className="w-3.5 h-3.5" />
+                            <span>مشاركة الوسام (واتساب / X)</span>
+                          </button>
+                        </div>
+                      ) : (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            if (badgeDef.taskTab !== 'quiz') {
+                              setActiveSubTab(badgeDef.taskTab as any);
+                            }
+                          }}
+                          className="w-full py-2 px-3 rounded-xl bg-white/10 hover:bg-white/20 text-emerald-200 hover:text-white text-[11px] font-medium flex items-center justify-center gap-1 transition-colors cursor-pointer"
+                        >
+                          <span>{badgeDef.taskText} ←</span>
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
           {/* Quiz Section */}
           <div className="p-6 sm:p-8 rounded-2xl bg-white border border-slate-200 shadow-sm space-y-6">
             <div className="space-y-1">
@@ -1947,8 +2320,8 @@ export const StudentPortal: React.FC<StudentPortalProps> = ({ initialSection = '
             </div>
           </div>
 
-          {/* Print Button */}
-          <div className="flex justify-center gap-3">
+          {/* Actions: Print & Share Certificate */}
+          <div className="flex flex-wrap justify-center gap-3">
             <button
               type="button"
               onClick={() => window.print()}
@@ -1957,9 +2330,41 @@ export const StudentPortal: React.FC<StudentPortalProps> = ({ initialSection = '
               <Printer className="w-4 h-4 text-amber-400" />
               <span>طباعة الشهادة الرسمية أو حفظها كـ PDF</span>
             </button>
+
+            <button
+              type="button"
+              onClick={() => {
+                const certBadge: StudentBadge = {
+                  id: `CERT-${Date.now().toString(36)}`,
+                  studentName: studentName.trim() || 'طالبة متميزة',
+                  grade,
+                  badgeId: 'certificate_honor',
+                  badgeTitle: 'شهادة شكر ووسام درع الوطن التقديري',
+                  iconName: 'Award',
+                  reason: 'المشاركة الفاعلة والإسهام المتميز في مبادرة درع الوطن والمادة 34 بالثانوية الأولى بالبدع',
+                  awardedAt: new Date().toISOString()
+                };
+                setSelectedBadgeForShare(certBadge);
+                setIsShareModalOpen(true);
+              }}
+              className="px-6 py-3 rounded-xl bg-gradient-to-r from-amber-400 to-amber-500 hover:from-amber-300 hover:to-amber-400 text-emerald-950 font-bold text-xs flex items-center gap-2 shadow-md hover:shadow-lg cursor-pointer transition-all"
+            >
+              <Share2 className="w-4 h-4" />
+              <span>مشاركة الشهادة والوسام عبر منصات التواصل (واتساب / X)</span>
+            </button>
           </div>
         </div>
       )}
+
+      {/* Social Media Sharing Modal */}
+      <ShareBadgeModal
+        isOpen={isShareModalOpen}
+        onClose={() => setIsShareModalOpen(false)}
+        badge={selectedBadgeForShare}
+        studentName={studentName}
+        grade={grade}
+        allBadgesCount={studentBadgesList.length}
+      />
     </div>
   );
 };

@@ -12,10 +12,11 @@ import { DigitalBook } from './components/DigitalBook';
 import { TeacherDashboard } from './components/TeacherDashboard';
 import { Footer } from './components/Footer';
 import { api } from './services/api';
+import { DailyMissionInteractive } from './components/DailyMissionInteractive';
 import { TeacherUser } from './types';
 
 export default function App() {
-  const [activeTab, setActiveTab] = useState<'home' | 'article34' | 'student' | 'book' | 'admin'>('home');
+  const [activeTab, setActiveTab] = useState<'home' | 'article34' | 'student' | 'book' | 'admin' | 'mission'>('home');
   const [studentInitialSection, setStudentInitialSection] = useState<'text' | 'drawing' | 'survey' | 'quiz' | 'certificate'>('text');
   const [currentTeacher, setCurrentTeacher] = useState<TeacherUser | null>(null);
 
@@ -69,6 +70,15 @@ export default function App() {
           />
         )}
 
+        {activeTab === 'mission' && (
+          <DailyMissionInteractive
+            onBackToHome={() => {
+              setActiveTab('home');
+              window.scrollTo({ top: 0, behavior: 'smooth' });
+            }}
+          />
+        )}
+
         {activeTab === 'article34' && (
           <Article34Showcase
             onGoToParticipate={() => {
@@ -81,6 +91,10 @@ export default function App() {
         {activeTab === 'student' && (
           <StudentPortal
             initialSection={studentInitialSection}
+            onGoToDailyMission={() => {
+              setActiveTab('mission');
+              window.scrollTo({ top: 0, behavior: 'smooth' });
+            }}
           />
         )}
 

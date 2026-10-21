@@ -1,11 +1,15 @@
-import { Shield, BookOpen, PenTool, CheckCircle2, ArrowLeft, Star, Heart, FileText, Award } from 'lucide-react';
+import React from 'react';
+import { Shield, BookOpen, PenTool, CheckCircle2, ArrowLeft, Star, Heart, FileText, Award, Sparkles, Gift, Compass } from 'lucide-react';
+import shieldImage from '../assets/images/shield_of_nation_hero_1792473197101.jpg';
+import { getTodayMission } from '../constants/dailyMissions';
 
 interface HeroSectionProps {
-  onNavigate: (tab: 'home' | 'article34' | 'student' | 'book' | 'admin') => void;
+  onNavigate: (tab: 'home' | 'article34' | 'student' | 'book' | 'admin' | 'mission') => void;
   onSelectStudentSection?: (section: 'text' | 'drawing' | 'survey' | 'quiz' | 'certificate') => void;
 }
 
 export const HeroSection: React.FC<HeroSectionProps> = ({ onNavigate, onSelectStudentSection }) => {
+  const todayMission = getTodayMission();
   return (
     <div className="space-y-12 pb-16">
       {/* Hero Visual Section */}
@@ -80,15 +84,15 @@ export const HeroSection: React.FC<HeroSectionProps> = ({ onNavigate, onSelectSt
             </div>
           </div>
 
-          {/* Majestic Generated Shield Graphic */}
+          {/* Majestic Shield Graphic */}
           <div className="lg:w-2/5 flex flex-col items-center justify-center">
-            <div className="relative group">
+            <div className="relative group w-full max-w-[340px] sm:max-w-[380px]">
               <div className="absolute -inset-2 bg-gradient-to-r from-amber-400/30 to-emerald-400/30 rounded-3xl blur-xl group-hover:blur-2xl transition duration-500 opacity-70" />
               <img
-                src="/assets/images/shield_of_nation_hero_1792473197101.jpg"
-                جalt="درع الوطن - شعار المبادرة الوطني"
+                src={shieldImage}
+                alt="درع الوطن - شعار المبادرة الوطني"
                 referrerPolicy="no-referrer"
-                className="relative w-72 sm:w-80 lg:w-96 rounded-2xl shadow-2xl border-2 border-amber-400/60 object-cover transform hover:scale-[1.02] transition-transform duration-300"
+                className="relative w-full aspect-square rounded-2xl shadow-2xl border-2 border-amber-400/60 object-cover transform hover:scale-[1.02] transition-transform duration-300"
               />
             </div>
             <div className="mt-4 text-center">
@@ -96,6 +100,65 @@ export const HeroSection: React.FC<HeroSectionProps> = ({ onNavigate, onSelectSt
                 رمز الدرع الوطني السعودي · ثانوية البدع الأولى
               </p>
             </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Prominent Daily Mission Card «مهمة اليوم» */}
+      <section className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-emerald-900 via-emerald-950 to-slate-900 border-2 border-amber-400/60 p-6 sm:p-8 text-white shadow-xl">
+        <div className="absolute top-0 right-0 w-64 h-64 bg-amber-400/10 rounded-full blur-3xl pointer-events-none" />
+        <div className="absolute bottom-0 left-0 w-48 h-48 bg-emerald-500/10 rounded-full blur-2xl pointer-events-none" />
+
+        <div className="relative z-10 flex flex-col lg:flex-row items-center justify-between gap-6">
+          <div className="space-y-3 text-right flex-1">
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="px-3.5 py-1 rounded-full bg-gradient-to-r from-amber-400 to-amber-500 text-emerald-950 text-xs font-black flex items-center gap-1.5 shadow-xs">
+                <Sparkles className="w-3.5 h-3.5" />
+                <span>مَهَمَّةُ اليَوْم</span>
+              </span>
+              <span className="px-3 py-0.5 rounded-full bg-emerald-800/80 border border-emerald-500/40 text-emerald-200 text-xs font-bold">
+                {todayMission.type === 'scenario' ? 'موقف وطني ومواطنة رقمية' : todayMission.type === 'riddle' ? 'لغز وطني فكري' : 'سؤال الدستور والمادة 34'}
+              </span>
+              <span className="px-3 py-0.5 rounded-full bg-amber-400/10 border border-amber-400/30 text-amber-300 text-xs font-extrabold">
+                +{todayMission.points} نقطة درع
+              </span>
+            </div>
+
+            <h3 className="text-xl sm:text-2xl font-black text-white font-calligraphy">
+              {todayMission.title}
+            </h3>
+
+            <p className="text-xs sm:text-sm text-emerald-100/90 leading-relaxed font-medium line-clamp-2 max-w-2xl">
+              {todayMission.scenarioContext || todayMission.question}
+            </p>
+
+            <div className="flex flex-wrap items-center gap-4 text-xs text-amber-300/90 pt-1">
+              <span className="flex items-center gap-1">
+                <Compass className="w-3.5 h-3.5 text-amber-400" />
+                <span>رحلة حماة الوطن (6 محطات)</span>
+              </span>
+              <span>·</span>
+              <span className="flex items-center gap-1">
+                <Gift className="w-3.5 h-3.5 text-amber-400" />
+                <span>صندوق مفاجآت أسبوعي</span>
+              </span>
+              <span>·</span>
+              <span className="flex items-center gap-1">
+                <Award className="w-3.5 h-3.5 text-amber-400" />
+                <span>شارتي «سفيرة الوعي» و«حامية القيم»</span>
+              </span>
+            </div>
+          </div>
+
+          <div className="flex flex-col sm:flex-row items-center gap-3 shrink-0 w-full lg:w-auto">
+            <button
+              onClick={() => onNavigate('mission')}
+              className="w-full sm:w-auto px-7 py-3.5 rounded-2xl bg-gradient-to-r from-amber-400 via-amber-300 to-amber-500 hover:from-amber-300 hover:to-amber-400 text-emerald-950 font-black text-sm shadow-xl hover:shadow-2xl transition-all duration-200 flex items-center justify-center gap-2 cursor-pointer border border-amber-200 transform hover:scale-[1.02]"
+            >
+              <Shield className="w-4 h-4 fill-emerald-950" />
+              <span>خوض مهمة اليوم الآن</span>
+              <ArrowLeft className="w-4 h-4" />
+            </button>
           </div>
         </div>
       </section>

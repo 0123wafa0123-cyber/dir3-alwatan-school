@@ -1,9 +1,9 @@
 import React from 'react';
-import { Shield, BookOpen, PenTool, Award, LayoutDashboard, Home, UserCheck } from 'lucide-react';
+import { Shield, BookOpen, PenTool, Award, LayoutDashboard, Home, UserCheck, Sparkles } from 'lucide-react';
 
 interface NavbarProps {
-  activeTab: 'home' | 'article34' | 'student' | 'book' | 'admin';
-  setActiveTab: (tab: 'home' | 'article34' | 'student' | 'book' | 'admin') => void;
+  activeTab: 'home' | 'article34' | 'student' | 'book' | 'admin' | 'mission';
+  setActiveTab: (tab: 'home' | 'article34' | 'student' | 'book' | 'admin' | 'mission') => void;
   isAdminLoggedIn: boolean;
   teacherName?: string;
   onLogout: () => void;
@@ -82,6 +82,19 @@ export const Navbar: React.FC<NavbarProps> = ({
           </button>
 
           <button
+            onClick={() => setActiveTab('mission')}
+            className={`flex items-center gap-1.5 transition-colors whitespace-nowrap cursor-pointer py-1 border-b-2 ${
+              activeTab === 'mission'
+                ? 'border-amber-500 text-amber-800 font-bold'
+                : 'border-transparent hover:text-emerald-800'
+            }`}
+          >
+            <Sparkles className="w-4 h-4 text-amber-500" />
+            <span>مهمة اليوم</span>
+            <span className="text-[10px] bg-amber-100 text-amber-800 px-1.5 py-0.2 rounded-full font-bold border border-amber-300">تحدي</span>
+          </button>
+
+          <button
             onClick={() => setActiveTab('student')}
             className={`flex items-center gap-1.5 transition-colors whitespace-nowrap cursor-pointer py-1 border-b-2 ${
               activeTab === 'student'
@@ -152,6 +165,16 @@ export const Navbar: React.FC<NavbarProps> = ({
         >
           <Home className="w-4 h-4" />
           <span>الرئيسية</span>
+        </button>
+
+        <button
+          onClick={() => setActiveTab('mission')}
+          className={`flex flex-col items-center gap-1 py-1 px-2 rounded-md ${
+            activeTab === 'mission' ? 'text-amber-800 font-bold bg-amber-100/70' : 'hover:text-emerald-700'
+          }`}
+        >
+          <Sparkles className="w-4 h-4 text-amber-500" />
+          <span>مهمة اليوم</span>
         </button>
 
         <button

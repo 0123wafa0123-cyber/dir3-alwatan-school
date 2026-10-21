@@ -71,3 +71,74 @@ export interface StudentSummary {
   badges: StudentBadge[];
   lastActive: string;
 }
+
+export interface DailyMission {
+  id: string;
+  dayIndex: number;
+  title: string;
+  category: 'article34' | 'values' | 'cyber' | 'community' | 'history';
+  type: 'scenario' | 'quiz' | 'riddle';
+  difficulty: 'سهل' | 'متوسط' | 'تحدي';
+  question: string;
+  scenarioContext?: string;
+  options: string[];
+  correctIndex: number;
+  explanation: string;
+  points: number;
+  badgeMilestone?: string;
+}
+
+export interface StudentMissionCompletion {
+  id: string;
+  studentName: string;
+  grade: string;
+  missionId: string;
+  missionTitle: string;
+  dateStr: string; // YYYY-MM-DD
+  pointsEarned: number;
+  isCorrect: boolean;
+  completedAt: string;
+}
+
+export interface StudentMissionProgress {
+  studentName: string;
+  grade: string;
+  totalPoints: number;
+  completedMissionsCount: number;
+  completedDates: string[];
+  currentStreak: number;
+  unlockedBadges: string[];
+  unlockedStations: number; // 1 to 6
+  weeklyBoxClaimed: boolean;
+  weeklyMissionsCount: number;
+  canClaimWeeklyBox?: boolean;
+  lastCompletedDate?: string;
+}
+
+export interface ClassCollaborativeProgress {
+  grade: string;
+  targetMissions: number;
+  completedMissions: number;
+  totalPoints: number;
+  percentage: number;
+  tier: 'برونزي' | 'فضي' | 'ذهبي' | 'ألماسي';
+}
+
+export interface TeacherMissionStats {
+  totalMissionsCompleted: number;
+  totalShieldPointsAwarded: number;
+  activeStudentsCount: number;
+  weeklyBoxesClaimedCount: number;
+  classBreakdown: {
+    grade: string;
+    completedCount: number;
+    points: number;
+    studentsCount: number;
+  }[];
+  recentCompletions: StudentMissionCompletion[];
+  topBadgesAwarded: {
+    badgeId: string;
+    badgeTitle: string;
+    count: number;
+  }[];
+}

@@ -90,7 +90,18 @@
       "createdAt": "2026-10-20T05:51:24.271Z"
     }
   ],
-  "badges": [],
+  "badges": [
+    {
+      "id": "BDG-mvhtoweb-3uks",
+      "studentName": "سارة أحمد الحويطي",
+      "grade": "أول ثانوي ١",
+      "badgeId": "ambassador_awareness",
+      "badgeTitle": "سفيرة الوعي",
+      "iconName": "Compass",
+      "reason": "اجتياز مهمة الوعي الدستوري وإتقان مضامين المادة 34 من النظام الأساسي للحكم",
+      "awardedAt": "2026-10-21T08:00:58.115Z"
+    }
+  ],
   "teachers": [
     {
       "id": "teacher-1",
@@ -108,5 +119,19 @@
       "role": "teacher_admin",
       "school": "الثانوية الأولى بالبدع"
     }
-  ]
+  ],
+  "missionCompletions": [
+    {
+      "id": "MIS-mvhtoweb-rsxs",
+      "studentName": "سارة أحمد الحويطي",
+      "grade": "أول ثانوي ١",
+      "missionId": "mission_art34_core",
+      "missionTitle": "سؤال الدستور: ثلاثية الدفاع في المادة 34",
+      "dateStr": "2026-10-21",
+      "pointsEarned": 25,
+      "isCorrect": true,
+      "completedAt": "2026-10-21T08:00:58.115Z"
+    }
+  ],
+  "claimedBoxes": []
 }
