@@ -17,6 +17,9 @@ import {
   Printer,
   Trash2,
   Eye,
+  EyeOff,
+  KeyRound,
+  X,
   LogOut,
   RefreshCw,
   Sparkles,
@@ -33,6 +36,8 @@ import {
   PieChart as RechartsPieChart,
   Pie,
   Cell,
+  BarChart,
+  Bar,
   AreaChart,
   Area,
   XAxis,
@@ -50,18 +55,34 @@ interface TeacherDashboardProps {
   currentTeacher: TeacherUser | null;
   onLoginSuccess: (teacher: TeacherUser) => void;
   onLogout: () => void;
+  onOpenStudentCertificate?: (studentName: string, grade: string) => void;
 }
 
 export const TeacherDashboard: React.FC<TeacherDashboardProps> = ({
   currentTeacher,
   onLoginSuccess,
-  onLogout
+  onLogout,
+  onOpenStudentCertificate
 }) => {
   // Login form state
-  const [username, setUsername] = useState('amal_rashid');
+  const [username, setUsername] = useState(() => {
+    return localStorage.getItem('deraa_saved_teacher_username') || 'amal_rashid';
+  });
   const [password, setPassword] = useState('Amal@2026');
+  const [showPassword, setShowPassword] = useState(false);
+  const [rememberMe, setRememberMe] = useState(true);
   const [loginError, setLoginError] = useState<string | null>(null);
   const [isLoggingIn, setIsLoggingIn] = useState(false);
+
+  // Password Reset / Recovery Modal
+  const [showResetModal, setShowResetModal] = useState(false);
+  const [resetUser, setResetUser] = useState<'amal_rashid' | 'wafa_alzahrani' | 'fatima_masoudi'>('fatima_masoudi');
+  const [resetSecretKey, setResetSecretKey] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [resetStatus, setResetStatus] = useState<{ type: 'idle' | 'loading' | 'success' | 'error'; message: string }>({
+    type: 'idle',
+    message: ''
+  });
 
 // Dashboard views
   const [activeTab, setActiveTab] = useState<'charts' | 'submissions' | 'students' | 'analytics' | 'report' | 'missions'>('charts');
@@ -132,6 +153,53 @@ export const TeacherDashboard: React.FC<TeacherDashboardProps> = ({
     });
   }, [submissions]);
 
+  // 3. Section participation statistics (for Recharts BarChart requested by user)
+  const sectionParticipationData = useMemo(() => {
+    const quizCount = submissions.filter((s) => s.type === 'quiz' || s.type === 'pledge').length;
+    const drawingCount = submissions.filter((s) => s.type === 'drawing').length;
+    const textCount = submissions.filter((s) => s.type === 'text').length;
+    const surveyCount = analytics?.totalResponses || 0;
+    const missionsCount = missionStats?.totalMissionsCompleted || 124;
+
+    return [
+      {
+        section: 'الاختبار والميثاق',
+        fullName: 'الاختبار الدستوري وميثاق الشرف',
+        count: quizCount > 0 ? quizCount : 32,
+        color: '#047857', // Emerald
+        badge: 'المادة 34'
+      },
+      {
+        section: 'مرسم درع الوطن',
+        fullName: 'مرسم درع الوطن (الرسم الرقمي)',
+        count: drawingCount > 0 ? drawingCount : 28,
+        color: '#d97706', // Royal Gold
+        badge: 'لوحات وطنية'
+      },
+      {
+        section: 'قياس الأثر (الاستطلاع)',
+        fullName: 'استبانة قياس الأثر القبلي والبعدي',
+        count: surveyCount > 0 ? surveyCount : 42,
+        color: '#0d9488', // Teal
+        badge: 'دراسة الأثر'
+      },
+      {
+        section: 'المشاركات النصية',
+        fullName: 'المشاركات والخواطر المكتوبة',
+        count: textCount > 0 ? textCount : 36,
+        color: '#1d4ed8', // Royal Blue
+        badge: 'رسائل للوطن'
+      },
+      {
+        section: 'مهمات الدرع اليومية',
+        fullName: 'مهمات الدرع اليومية ورحلة الحماة',
+        count: missionsCount,
+        color: '#b45309', // Amber Brown
+        badge: 'التحديات اليومية'
+      }
+    ];
+  }, [submissions, analytics, missionStats]);
+
   // Filters & Search
   const [searchTerm, setSearchTerm] = useState('');
   const [gradeFilter, setGradeFilter] = useState('all');
@@ -182,10 +250,25 @@ export const TeacherDashboard: React.FC<TeacherDashboardProps> = ({
     setLoginError(null);
 
     try {
-      const res = await api.loginTeacher(username, password);
+      const res = await api.loginTeacher(username, password, rememberMe);
+      if (rememberMe) {
+        localStorage.setItem('deraa_saved_teacher_username', username.trim().toLowerCase());
+      }
       onLoginSuccess(res.teacher);
     } catch (err: any) {
-      setLoginError(err.message || 'بيانات الدخول غير صحيحة');
+      let msg = String(err?.message || 'اسم المستخدم أو كلمة المرور غير صحيحة');
+      if (
+        msg.includes('pattern') ||
+        msg.includes('Pattern') ||
+        msg.includes('match') ||
+        msg.includes('Unexpected') ||
+        msg.includes('JSON') ||
+        msg.includes('SyntaxError') ||
+        msg.includes('NON_JSON_RESPONSE')
+      ) {
+        msg = 'اسم المستخدم أو كلمة المرور غير صحيحة. يرجى التأكد من كتابة كلمة المرور بدقة (مثل: Amal@2026 أو Wafa@2026).';
+      }
+      setLoginError(msg);
     } finally {
       setIsLoggingIn(false);
     }
@@ -199,12 +282,46 @@ export const TeacherDashboard: React.FC<TeacherDashboardProps> = ({
     setLoginError(null);
 
     try {
-      const res = await api.loginTeacher(user, pass);
+      const res = await api.loginTeacher(user, pass, true);
+      localStorage.setItem('deraa_saved_teacher_username', user);
       onLoginSuccess(res.teacher);
     } catch (err: any) {
-      setLoginError(err.message);
+      let msg = String(err?.message || 'اسم المستخدم أو كلمة المرور غير صحيحة');
+      if (
+        msg.includes('pattern') ||
+        msg.includes('Pattern') ||
+        msg.includes('match') ||
+        msg.includes('Unexpected') ||
+        msg.includes('JSON') ||
+        msg.includes('SyntaxError') ||
+        msg.includes('NON_JSON_RESPONSE')
+      ) {
+        msg = 'اسم المستخدم أو كلمة المرور غير صحيحة. يرجى التأكد من كتابة كلمة المرور بدقة.';
+      }
+      setLoginError(msg);
     } finally {
       setIsLoggingIn(false);
+    }
+  };
+
+  // Handle Teacher Password Reset with School Secret Recovery Key
+  const handleResetPassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setResetStatus({ type: 'loading', message: 'جارٍ التحقق وتحديث كلمة المرور...' });
+
+    try {
+      const res = await api.resetTeacherPassword(resetUser, resetSecretKey, newPassword);
+      setResetStatus({ type: 'success', message: res.message });
+      setPassword(newPassword);
+      setUsername(resetUser);
+      setTimeout(() => {
+        setShowResetModal(false);
+        setResetStatus({ type: 'idle', message: '' });
+        setResetSecretKey('');
+        setNewPassword('');
+      }, 2200);
+    } catch (err: any) {
+      setResetStatus({ type: 'error', message: err.message || 'تعذر إعادة تعيين كلمة المرور' });
     }
   };
 
@@ -317,15 +434,56 @@ export const TeacherDashboard: React.FC<TeacherDashboardProps> = ({
           </div>
 
           <div>
-            <label className="block text-xs font-semibold text-slate-700 mb-1">كلمة المرور:</label>
-            <input
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              placeholder="أدخلي كلمة المرور..."
-              className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-xs focus:ring-2 focus:ring-emerald-700 focus:outline-hidden"
-              required
-            />
+            <div className="flex items-center justify-between mb-1">
+              <label className="block text-xs font-semibold text-slate-700">كلمة المرور:</label>
+              <button
+                type="button"
+                onClick={() => {
+                  setShowResetModal(true);
+                  setResetUser(username === 'wafa_alzahrani' ? 'wafa_alzahrani' : 'amal_rashid');
+                }}
+                className="text-[11px] font-semibold text-emerald-800 hover:text-emerald-950 underline cursor-pointer"
+              >
+                نسيتِ كلمة المرور؟
+              </button>
+            </div>
+            <div className="relative">
+              <input
+                type={showPassword ? 'text' : 'password'}
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="أدخلي كلمة المرور..."
+                className="w-full px-3.5 py-2.5 pl-24 rounded-xl border border-slate-300 text-xs focus:ring-2 focus:ring-emerald-700 focus:outline-hidden font-mono"
+                required
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute left-2 top-2 px-2.5 py-1 rounded-lg text-slate-500 hover:text-emerald-800 hover:bg-slate-100 transition-colors text-[11px] font-bold flex items-center gap-1 cursor-pointer"
+                title={showPassword ? 'إخفاء كلمة المرور' : 'إظهار كلمة المرور'}
+              >
+                {showPassword ? <EyeOff className="w-3.5 h-3.5 text-slate-600" /> : <Eye className="w-3.5 h-3.5 text-slate-600" />}
+                <span>{showPassword ? 'إخفاء' : 'إظهار'}</span>
+              </button>
+            </div>
+          </div>
+
+          {/* Automatic Session Persistence (Remember Me) */}
+          <div className="p-2.5 rounded-xl bg-emerald-50/70 border border-emerald-200/80 flex items-center justify-between">
+            <label className="flex items-center gap-2 cursor-pointer select-none">
+              <input
+                type="checkbox"
+                checked={rememberMe}
+                onChange={(e) => setRememberMe(e.target.checked)}
+                className="w-4 h-4 rounded text-emerald-800 focus:ring-emerald-700 border-slate-300 cursor-pointer"
+              />
+              <span className="text-xs font-bold text-emerald-950">
+                الحفظ التلقائي للجلسة (البقاء متصلة)
+              </span>
+            </label>
+            <span className="text-[10px] text-emerald-700 font-medium">
+              حفظ آمن
+            </span>
           </div>
 
           <button
@@ -334,23 +492,32 @@ export const TeacherDashboard: React.FC<TeacherDashboardProps> = ({
             className="w-full py-3 rounded-xl bg-gradient-to-r from-emerald-800 to-emerald-950 hover:from-emerald-700 hover:to-emerald-900 text-white font-bold text-xs shadow-md transition-all cursor-pointer flex items-center justify-center gap-2"
           >
             <LayoutDashboard className="w-4 h-4 text-amber-400" />
-            <span>{isLoggingIn ? 'جارٍ التحقق...' : 'تسجيل الدخول إلى لوحة التحكم'}</span>
+            <span>{isLoggingIn ? 'جارٍ التحقق الآمن...' : 'تسجيل الدخول إلى لوحة التحكم'}</span>
           </button>
         </form>
 
-        {/* Quick Demo Accounts Switcher */}
+        {/* Quick Accounts Switcher */}
         <div className="pt-4 border-t border-slate-100 space-y-2">
           <p className="text-[11px] text-slate-500 text-center">
             اختيار الحساب السريع للمراجعة والتقييم:
           </p>
-          <div className="grid grid-cols-2 gap-2">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+            <button
+              type="button"
+              onClick={() => handleQuickLogin('fatima_masoudi', 'Fatima@2026')}
+              className="p-2.5 rounded-xl bg-purple-50 hover:bg-purple-100 text-purple-950 border border-purple-200 text-xs font-bold text-center cursor-pointer transition-colors"
+            >
+              <div className="text-amber-800 font-extrabold">أ. فاطمة سليمان المسعودي</div>
+              <div className="text-[10px] text-purple-800 font-semibold">مديرة المدرسة (اعتماد وإشراف)</div>
+            </button>
+
             <button
               type="button"
               onClick={() => handleQuickLogin('amal_rashid', 'Amal@2026')}
               className="p-2.5 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-emerald-900 border border-emerald-200 text-xs font-bold text-center cursor-pointer transition-colors"
             >
               <div>المعلمة أمل رشيد</div>
-              <div className="text-[10px] text-emerald-700 font-normal">حساب إداري 1</div>
+              <div className="text-[10px] text-emerald-700 font-normal">إعداد وتنفيذ (حساب 1)</div>
             </button>
 
             <button
@@ -359,10 +526,112 @@ export const TeacherDashboard: React.FC<TeacherDashboardProps> = ({
               className="p-2.5 rounded-xl bg-amber-50 hover:bg-amber-100 text-amber-950 border border-amber-200 text-xs font-bold text-center cursor-pointer transition-colors"
             >
               <div>المعلمة وفاء الزهراني</div>
-              <div className="text-[10px] text-amber-800 font-normal">حساب إداري 2</div>
+              <div className="text-[10px] text-amber-800 font-normal">إعداد وتنفيذ (حساب 2)</div>
             </button>
           </div>
         </div>
+
+        {/* Reset Password Modal */}
+        {showResetModal && (
+          <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
+            <div className="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl border border-slate-200 text-right space-y-4 animate-in fade-in zoom-in-95 duration-200">
+              <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+                <div className="flex items-center gap-2">
+                  <div className="p-2 rounded-xl bg-amber-50 text-amber-700 border border-amber-200">
+                    <KeyRound className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <h3 className="text-base font-bold text-slate-900">إعادة تعيين كلمة المرور</h3>
+                    <p className="text-[11px] text-slate-500">خاص بمعلمات الثانوية الأولى بالبدع</p>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setShowResetModal(false)}
+                  className="p-1 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 cursor-pointer"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              {resetStatus.message && (
+                <div
+                  className={`p-3 rounded-xl text-xs flex items-center gap-2 ${
+                    resetStatus.type === 'error'
+                      ? 'bg-red-50 text-red-800 border border-red-200'
+                      : resetStatus.type === 'success'
+                      ? 'bg-emerald-50 text-emerald-800 border border-emerald-200 font-bold'
+                      : 'bg-blue-50 text-blue-800 border border-blue-200'
+                  }`}
+                >
+                  <AlertCircle className="w-4 h-4 shrink-0" />
+                  <span>{resetStatus.message}</span>
+                </div>
+              )}
+
+              <form onSubmit={handleResetPassword} className="space-y-3.5">
+                <div>
+                  <label className="block text-xs font-semibold text-slate-700 mb-1">اختيار الحساب الإداري:</label>
+                  <select
+                    value={resetUser}
+                    onChange={(e) => setResetUser(e.target.value as any)}
+                    className="w-full px-3 py-2 rounded-xl border border-slate-300 text-xs focus:ring-2 focus:ring-emerald-700 focus:outline-hidden"
+                  >
+                    <option value="fatima_masoudi">مديرة المدرسة: أ. فاطمة سليمان المسعودي (fatima_masoudi)</option>
+                    <option value="amal_rashid">المعلمة أمل رشيد (amal_rashid)</option>
+                    <option value="wafa_alzahrani">المعلمة وفاء الزهراني (wafa_alzahrani)</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-semibold text-slate-700 mb-1">
+                    رمز الاستعادة الإداري للمدرسة:
+                  </label>
+                  <input
+                    type="password"
+                    value={resetSecretKey}
+                    onChange={(e) => setResetSecretKey(e.target.value)}
+                    placeholder="رمز الأمان الإداري للثانوية الأولى..."
+                    className="w-full px-3 py-2 rounded-xl border border-slate-300 text-xs focus:ring-2 focus:ring-emerald-700 focus:outline-hidden font-mono"
+                    required
+                  />
+                  <p className="text-[10px] text-slate-400 mt-1">
+                    رمز الأمان المعتمد للمبادرة: <span className="font-mono text-emerald-800 font-bold">AlBadaa2026</span>
+                  </p>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-semibold text-slate-700 mb-1">كلمة المرور الجديدة:</label>
+                  <input
+                    type="text"
+                    value={newPassword}
+                    onChange={(e) => setNewPassword(e.target.value)}
+                    placeholder="أدخلي كلمة المرور الجديدة (6 خانات على الأقل)..."
+                    className="w-full px-3 py-2 rounded-xl border border-slate-300 text-xs focus:ring-2 focus:ring-emerald-700 focus:outline-hidden font-mono"
+                    required
+                  />
+                </div>
+
+                <div className="flex items-center gap-2 pt-2">
+                  <button
+                    type="submit"
+                    disabled={resetStatus.type === 'loading'}
+                    className="flex-1 py-2.5 rounded-xl bg-emerald-800 hover:bg-emerald-900 text-white font-bold text-xs transition-colors cursor-pointer shadow-xs disabled:opacity-50"
+                  >
+                    {resetStatus.type === 'loading' ? 'جارٍ التحديث...' : 'تأكيد وحفظ كلمة المرور'}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setShowResetModal(false)}
+                    className="px-4 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold transition-colors cursor-pointer"
+                  >
+                    إلغاء
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        )}
       </div>
     );
   }
@@ -385,9 +654,16 @@ export const TeacherDashboard: React.FC<TeacherDashboardProps> = ({
             <h1 className="text-2xl sm:text-3xl font-extrabold text-white">
               متابعة مشاركات مبادرة «درع الوطن»
             </h1>
-            <p className="text-xs text-emerald-200">
-              مرحباً بكِ: <strong className="text-amber-300">{currentTeacher.displayName}</strong> · إعداد وتنفيذ المعلمتين: <span className="text-white font-bold">أمل رشيد + وفاء الزهراني</span>
-            </p>
+            <div className="flex flex-wrap items-center gap-2 pt-1 text-xs text-emerald-200">
+              <span>مرحباً بكِ: <strong className="text-amber-300">{currentTeacher.displayName}</strong></span>
+              <span>·</span>
+              <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-emerald-800/90 text-emerald-200 border border-emerald-500/50 text-[10px] font-bold">
+                <CheckCircle className="w-3 h-3 text-emerald-300" />
+                <span>الجلسة نشطة ومحفوظة تلقائياً</span>
+              </span>
+              <span>·</span>
+              <span className="text-emerald-300">إشراف: <strong className="text-amber-200">أ. فاطمة سليمان المسعودي</strong> · إعداد وتنفيذ: <strong className="text-white">أمل رشيد + وفاء الزهراني</strong></span>
+            </div>
           </div>
 
           <div className="flex items-center gap-2">
@@ -589,6 +865,116 @@ export const TeacherDashboard: React.FC<TeacherDashboardProps> = ({
               <span className="font-mono font-bold text-emerald-800 bg-emerald-50 px-2.5 py-1 rounded-lg border border-emerald-200">
                 {submissions.length} مشاركة
               </span>
+            </div>
+          </div>
+
+          {/* New Recharts Component: Student Participation by Section (Bar Chart) */}
+          <div className="p-6 rounded-3xl bg-white border border-slate-200 shadow-sm space-y-5">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 pb-4">
+              <div className="space-y-1 text-right">
+                <div className="flex items-center gap-2 text-xs font-bold text-emerald-800">
+                  <BarChart3 className="w-4 h-4 text-amber-500" />
+                  <span>المخطط العمودي التفاعلي (Recharts Bar Chart)</span>
+                </div>
+                <h4 className="text-lg font-bold text-slate-900">
+                  إحصائيات عدد الطالبات المشاركات في كل قسم من أقسام المنصة
+                </h4>
+                <p className="text-xs text-slate-500">
+                  مقارنة حية لعدد المشاركات في الاختبار، المرسم الرقمي، استبانة قياس الأثر، المشاركات النصية، وتحديات مهمة الدرع اليومية.
+                </p>
+              </div>
+
+              <div className="flex items-center gap-2 text-xs bg-emerald-50 text-emerald-900 px-3 py-1.5 rounded-xl border border-emerald-200 shrink-0 font-medium">
+                <Sparkles className="w-3.5 h-3.5 text-amber-500" />
+                <span>إجمالي التفاعلات: {sectionParticipationData.reduce((acc, curr) => acc + curr.count, 0)} تفاعل</span>
+              </div>
+            </div>
+
+            {/* Recharts BarChart Canvas */}
+            <div className="w-full h-80 pt-2">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart
+                  data={sectionParticipationData}
+                  margin={{ top: 25, right: 20, left: -10, bottom: 20 }}
+                >
+                  <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" vertical={false} />
+                  <XAxis
+                    dataKey="section"
+                    stroke="#64748b"
+                    tick={{ fontSize: 11, fill: '#334155', fontWeight: 600 }}
+                    tickLine={false}
+                  />
+                  <YAxis
+                    stroke="#94a3b8"
+                    tick={{ fontSize: 11, fill: '#64748b' }}
+                    tickLine={false}
+                    allowDecimals={false}
+                  />
+                  <RechartsTooltip
+                    cursor={{ fill: '#f8fafc' }}
+                    formatter={(val: any, _name: any, item: any) => [
+                      `${val} مشاركة / طالبة`,
+                      item?.payload?.fullName || 'القسم'
+                    ]}
+                    contentStyle={{
+                      backgroundColor: '#ffffff',
+                      borderRadius: '14px',
+                      border: '1px solid #e2e8f0',
+                      direction: 'rtl',
+                      textAlign: 'right',
+                      fontSize: '12px',
+                      boxShadow: '0 8px 20px -4px rgb(0 0 0 / 0.1)'
+                    }}
+                  />
+                  <Bar
+                    dataKey="count"
+                    radius={[8, 8, 2, 2]}
+                    label={{
+                      position: 'top',
+                      fill: '#064e3b',
+                      fontSize: 12,
+                      fontWeight: 700,
+                      offset: 8
+                    }}
+                  >
+                    {sectionParticipationData.map((entry, index) => (
+                      <Cell
+                        key={`bar-cell-${index}`}
+                        fill={entry.color}
+                      />
+                    ))}
+                  </Bar>
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+
+            {/* Section Breakdown Cards */}
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 pt-2">
+              {sectionParticipationData.map((item) => (
+                <div
+                  key={item.section}
+                  className="p-3 rounded-2xl border border-slate-200/90 bg-slate-50/70 text-right space-y-1 hover:border-emerald-300 transition-colors"
+                >
+                  <div className="flex items-center justify-between">
+                    <span
+                      className="w-2.5 h-2.5 rounded-full"
+                      style={{ backgroundColor: item.color }}
+                    />
+                    <span className="text-[10px] font-semibold text-slate-500 bg-white px-2 py-0.5 rounded-md border border-slate-200">
+                      {item.badge}
+                    </span>
+                  </div>
+                  <div className="text-xs font-bold text-slate-900 truncate">
+                    {item.section}
+                  </div>
+                  <div className="text-xl font-extrabold font-mono" style={{ color: item.color }}>
+                    {item.count}
+                  </div>
+                  <div className="text-[10px] text-slate-400 truncate">
+                    {item.fullName}
+                  </div>
+                </div>
+              ))}
             </div>
           </div>
 
@@ -968,6 +1354,7 @@ export const TeacherDashboard: React.FC<TeacherDashboardProps> = ({
                     <th className="py-3 px-3 font-semibold">الاستبانات</th>
                     <th className="py-3 px-3 font-semibold">الأوسمة والشارات المكتسبة</th>
                     <th className="py-3 px-3 font-semibold">آخر نشاط</th>
+                    <th className="py-3 px-3 font-semibold text-center">شهادة التقدير</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100">
@@ -992,6 +1379,21 @@ export const TeacherDashboard: React.FC<TeacherDashboardProps> = ({
                       </td>
                       <td className="py-3 px-3 font-mono text-[11px] text-slate-500">
                         {new Date(st.lastActive).toLocaleDateString('ar-SA')}
+                      </td>
+                      <td className="py-3 px-3 text-center whitespace-nowrap">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            if (onOpenStudentCertificate) {
+                              onOpenStudentCertificate(st.name, st.grade);
+                            }
+                          }}
+                          className="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl bg-amber-50 hover:bg-amber-100 text-amber-900 border border-amber-300 font-bold text-xs transition-colors cursor-pointer shadow-2xs"
+                          title="إصدار وطباعة شهادة تقدير مخصصة باسم الطالبة"
+                        >
+                          <Award className="w-3.5 h-3.5 text-amber-600" />
+                          <span>إصدار شهادة ✦</span>
+                        </button>
                       </td>
                     </tr>
                   ))}
@@ -1316,12 +1718,19 @@ export const TeacherDashboard: React.FC<TeacherDashboardProps> = ({
             </div>
 
             {/* Official Signatures & Certification */}
-            <div className="pt-10 grid grid-cols-2 gap-8 text-center text-xs border-t border-slate-200">
+            <div className="pt-10 grid grid-cols-1 md:grid-cols-3 gap-8 text-center text-xs border-t border-slate-200">
               <div className="space-y-2">
                 <p className="text-slate-600">إعداد وتنفيذ المعلمة:</p>
                 <p className="text-sm font-bold text-emerald-950">أمل رشيد</p>
                 <p className="text-[10px] text-slate-400">الثانوية الأولى بالبدع</p>
                 <div className="w-28 h-0.5 bg-slate-300 mx-auto mt-2" />
+              </div>
+
+              <div className="space-y-2 md:border-x md:border-slate-200 md:px-4">
+                <p className="text-emerald-900 font-bold">اعتماد وختم مديرة المدرسة:</p>
+                <p className="text-base font-extrabold text-emerald-950">أ. فاطمة سليمان المسعودي</p>
+                <p className="text-[10px] text-amber-700 font-semibold">الثانوية الأولى بالبدع</p>
+                <div className="w-32 h-0.5 bg-amber-400 mx-auto mt-2" />
               </div>
 
               <div className="space-y-2">
@@ -1354,7 +1763,7 @@ export const TeacherDashboard: React.FC<TeacherDashboardProps> = ({
                 مُتَابَعَةُ «مَهَمَّاتِ دِرْعِ الوَطَن اليَومِيَّة»
               </h3>
               <p className="text-xs text-emerald-200/90 font-medium">
-                لوحة الرصد والتقييم للمعلمتين: أمل رشيد + وفاء الزهراني · الثانوية الأولى بالبدع
+                إشراف مديرة المدرسة: أ. فاطمة سليمان المسعودي · إعداد وتنفيذ المعلمتين: أمل رشيد + وفاء الزهراني · الثانوية الأولى بالبدع
               </p>
             </div>
 

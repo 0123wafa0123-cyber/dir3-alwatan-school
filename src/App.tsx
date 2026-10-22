@@ -13,35 +13,57 @@ import { TeacherDashboard } from './components/TeacherDashboard';
 import { Footer } from './components/Footer';
 import { api } from './services/api';
 import { DailyMissionInteractive } from './components/DailyMissionInteractive';
+import { StudentCertificateHub } from './components/StudentCertificateHub';
 import { TeacherUser } from './types';
 
 export default function App() {
-  const [activeTab, setActiveTab] = useState<'home' | 'article34' | 'student' | 'book' | 'admin' | 'mission'>('home');
+  const [activeTab, setActiveTab] = useState<'home' | 'article34' | 'student' | 'book' | 'admin' | 'mission' | 'certificate'>(() => {
+    const saved = localStorage.getItem('deraa_active_tab');
+    if (saved && ['home', 'article34', 'student', 'book', 'admin', 'mission', 'certificate'].includes(saved)) {
+      return saved as any;
+    }
+    return 'home';
+  });
   const [studentInitialSection, setStudentInitialSection] = useState<'text' | 'drawing' | 'survey' | 'quiz' | 'certificate'>('text');
+  const [certificateStudentName, setCertificateStudentName] = useState<string>('');
+  const [certificateGrade, setCertificateGrade] = useState<string>('الصف الأول ثانوي');
   const [currentTeacher, setCurrentTeacher] = useState<TeacherUser | null>(null);
 
-  // Check existing teacher login session
+  // Check and restore existing teacher login session
   useEffect(() => {
     api.getCurrentTeacher().then((teacher) => {
-      if (teacher) setCurrentTeacher(teacher);
+      if (teacher) {
+        setCurrentTeacher(teacher);
+      }
     });
   }, []);
 
+  const changeTab = (tab: 'home' | 'article34' | 'student' | 'book' | 'admin' | 'mission' | 'certificate') => {
+    setActiveTab(tab);
+    localStorage.setItem('deraa_active_tab', tab);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
   const handleTeacherLogin = (teacher: TeacherUser) => {
     setCurrentTeacher(teacher);
-    setActiveTab('admin');
+    changeTab('admin');
   };
 
   const handleTeacherLogout = async () => {
     await api.logout();
     setCurrentTeacher(null);
-    setActiveTab('home');
+    changeTab('home');
   };
 
   const handleNavigateToStudent = (section: 'text' | 'drawing' | 'survey' | 'quiz' | 'certificate') => {
     setStudentInitialSection(section);
-    setActiveTab('student');
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    changeTab('student');
+  };
+
+  const handleOpenCertificate = (name?: string, gradeVal?: string) => {
+    if (name) setCertificateStudentName(name);
+    if (gradeVal) setCertificateGrade(gradeVal);
+    changeTab('certificate');
   };
 
   return (
@@ -49,10 +71,7 @@ export default function App() {
       {/* Top Bar with School & Teacher Trust Strip */}
       <Navbar
         activeTab={activeTab}
-        setActiveTab={(tab) => {
-          setActiveTab(tab);
-          window.scrollTo({ top: 0, behavior: 'smooth' });
-        }}
+        setActiveTab={changeTab}
         isAdminLoggedIn={!!currentTeacher}
         teacherName={currentTeacher?.displayName}
         onLogout={handleTeacherLogout}
@@ -88,6 +107,17 @@ export default function App() {
           />
         )}
 
+        {activeTab === 'certificate' && (
+          <StudentCertificateHub
+            initialStudentName={certificateStudentName}
+            initialGrade={certificateGrade}
+            onBackToHome={() => {
+              setActiveTab('home');
+              window.scrollTo({ top: 0, behavior: 'smooth' });
+            }}
+          />
+        )}
+
         {activeTab === 'student' && (
           <StudentPortal
             initialSection={studentInitialSection}
@@ -95,6 +125,7 @@ export default function App() {
               setActiveTab('mission');
               window.scrollTo({ top: 0, behavior: 'smooth' });
             }}
+            onOpenCertificateHub={(name, gradeVal) => handleOpenCertificate(name, gradeVal)}
           />
         )}
 
@@ -107,6 +138,7 @@ export default function App() {
             currentTeacher={currentTeacher}
             onLoginSuccess={handleTeacherLogin}
             onLogout={handleTeacherLogout}
+            onOpenStudentCertificate={(name, gradeVal) => handleOpenCertificate(name, gradeVal)}
           />
         )}
       </main>

@@ -38,13 +38,18 @@ import { ShareBadgeModal } from './ShareBadgeModal';
 interface StudentPortalProps {
   initialSection?: 'text' | 'drawing' | 'survey' | 'quiz' | 'certificate';
   onGoToDailyMission?: () => void;
+  onOpenCertificateHub?: (name: string, grade: string) => void;
 }
 
 import { SCHOOL_GRADES } from '../constants/grades';
 import { SHIELD_TEMPLATES } from '../constants/templates';
 import { ShieldTextCard } from './ShieldTextCard';
 
-export const StudentPortal: React.FC<StudentPortalProps> = ({ initialSection = 'text', onGoToDailyMission }) => {
+export const StudentPortal: React.FC<StudentPortalProps> = ({
+  initialSection = 'text',
+  onGoToDailyMission,
+  onOpenCertificateHub
+}) => {
   const [activeSubTab, setActiveSubTab] = useState<'text' | 'drawing' | 'survey' | 'quiz' | 'certificate'>(initialSection);
 
   // Global student identity in this session
@@ -2352,6 +2357,17 @@ export const StudentPortal: React.FC<StudentPortalProps> = ({ initialSection = '
               <Share2 className="w-4 h-4" />
               <span>مشاركة الشهادة والوسام عبر منصات التواصل (واتساب / X)</span>
             </button>
+
+            {onOpenCertificateHub && (
+              <button
+                type="button"
+                onClick={() => onOpenCertificateHub(studentName, grade)}
+                className="px-6 py-3 rounded-xl bg-gradient-to-r from-emerald-950 via-emerald-900 to-slate-950 border border-amber-400/80 text-amber-300 hover:text-white font-bold text-xs flex items-center gap-2 shadow-md hover:shadow-lg cursor-pointer transition-all"
+              >
+                <Sparkles className="w-4 h-4 text-amber-400" />
+                <span>تخصيص الشهادة بأنماط ملكية متقدمة وتصدير PDF عالي الدقة ←</span>
+              </button>
+            )}
           </div>
         </div>
       )}

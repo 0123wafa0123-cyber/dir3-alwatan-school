@@ -2,8 +2,8 @@ import React from 'react';
 import { Shield, BookOpen, PenTool, Award, LayoutDashboard, Home, UserCheck, Sparkles } from 'lucide-react';
 
 interface NavbarProps {
-  activeTab: 'home' | 'article34' | 'student' | 'book' | 'admin' | 'mission';
-  setActiveTab: (tab: 'home' | 'article34' | 'student' | 'book' | 'admin' | 'mission') => void;
+  activeTab: 'home' | 'article34' | 'student' | 'book' | 'admin' | 'mission' | 'certificate';
+  setActiveTab: (tab: 'home' | 'article34' | 'student' | 'book' | 'admin' | 'mission' | 'certificate') => void;
   isAdminLoggedIn: boolean;
   teacherName?: string;
   onLogout: () => void;
@@ -24,9 +24,9 @@ export const Navbar: React.FC<NavbarProps> = ({
           <div className="flex items-center gap-2">
             <span className="font-semibold text-amber-400">الثانوية الأولى بالبدع</span>
             <span className="text-emerald-400/60" aria-hidden="true">·</span>
-            <span>مبادرة درع الوطن</span>
+            <span>إشراف مديرة المدرسة: <strong className="text-white font-medium">أ. فاطمة سليمان المسعودي</strong></span>
             <span className="text-emerald-400/60 hidden sm:inline" aria-hidden="true">·</span>
-            <span className="text-emerald-300 hidden sm:inline">التوعية بالمادة 34 من النظام الأساسي للحكم</span>
+            <span className="text-emerald-300 hidden sm:inline">مبادرة درع الوطن</span>
           </div>
           <div className="flex items-center gap-2 text-xs">
             <span className="text-emerald-300/80">إعداد وتنفيذ المعلمتين:</span>
@@ -107,6 +107,19 @@ export const Navbar: React.FC<NavbarProps> = ({
           </button>
 
           <button
+            onClick={() => setActiveTab('certificate')}
+            className={`flex items-center gap-1.5 transition-colors whitespace-nowrap cursor-pointer py-1 border-b-2 ${
+              activeTab === 'certificate'
+                ? 'border-amber-500 text-amber-800 font-bold'
+                : 'border-transparent hover:text-emerald-800'
+            }`}
+          >
+            <Award className="w-4 h-4 text-amber-500" />
+            <span>شهادات التقدير</span>
+            <span className="text-[10px] bg-amber-100 text-amber-800 px-1.5 py-0.2 rounded-full font-bold border border-amber-300">تكريم</span>
+          </button>
+
+          <button
             onClick={() => setActiveTab('book')}
             className={`flex items-center gap-1.5 transition-colors whitespace-nowrap cursor-pointer py-1 border-b-2 ${
               activeTab === 'book'
@@ -149,7 +162,7 @@ export const Navbar: React.FC<NavbarProps> = ({
               className="px-4 py-2 text-xs font-semibold text-white bg-gradient-to-r from-emerald-800 to-emerald-950 hover:from-emerald-700 hover:to-emerald-900 rounded-lg shadow-xs hover:shadow-sm transition-all duration-200 flex items-center gap-1.5 cursor-pointer border border-amber-400/30 whitespace-nowrap"
             >
               <UserCheck className="w-3.5 h-3.5 text-amber-400" />
-              <span>دخول المعلمات</span>
+              <span>دخول الإدارة والمعلمات</span>
             </button>
           )}
         </div>
@@ -195,6 +208,16 @@ export const Navbar: React.FC<NavbarProps> = ({
         >
           <PenTool className="w-4 h-4" />
           <span>المشاركات</span>
+        </button>
+
+        <button
+          onClick={() => setActiveTab('certificate')}
+          className={`flex flex-col items-center gap-1 py-1 px-2 rounded-md ${
+            activeTab === 'certificate' ? 'text-amber-800 font-bold bg-amber-100/70' : 'hover:text-emerald-700'
+          }`}
+        >
+          <Award className="w-4 h-4 text-amber-500" />
+          <span>الشهادات</span>
         </button>
 
         <button

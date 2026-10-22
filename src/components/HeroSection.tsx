@@ -4,7 +4,7 @@ import shieldImage from '../assets/images/shield_of_nation_hero_1792473197101.jp
 import { getTodayMission } from '../constants/dailyMissions';
 
 interface HeroSectionProps {
-  onNavigate: (tab: 'home' | 'article34' | 'student' | 'book' | 'admin' | 'mission') => void;
+  onNavigate: (tab: 'home' | 'article34' | 'student' | 'book' | 'admin' | 'mission' | 'certificate') => void;
   onSelectStudentSection?: (section: 'text' | 'drawing' | 'survey' | 'quiz' | 'certificate') => void;
 }
 
@@ -20,12 +20,15 @@ export const HeroSection: React.FC<HeroSectionProps> = ({ onNavigate, onSelectSt
         <div className="relative max-w-7xl mx-auto px-6 py-12 sm:py-16 lg:py-20 flex flex-col lg:flex-row items-center justify-between gap-10">
           {/* Text and Official Initiative Brief */}
           <div className="lg:w-3/5 space-y-6 text-right">
-            {/* School & Teachers Trust Strip */}
-            <div className="inline-flex items-center gap-2 text-xs sm:text-sm text-emerald-200/90 bg-emerald-800/60 backdrop-blur-xs px-4 py-1.5 rounded-full border border-amber-400/40">
+            {/* School & Leadership & Teachers Trust Strip */}
+            <div className="inline-flex flex-wrap items-center gap-2 text-xs sm:text-sm text-emerald-200/90 bg-emerald-800/60 backdrop-blur-xs px-4 py-1.5 rounded-full border border-amber-400/40">
               <span className="font-bold text-amber-300">الثانوية الأولى بالبدع</span>
               <span className="text-amber-400/50" aria-hidden="true">·</span>
-              <span>إعداد وتنفيذ المعلمتين:</span>
-              <span className="font-bold text-white">أمل رشيد + وفاء الزهراني</span>
+              <span>إشراف مديرة المدرسة:</span>
+              <span className="font-bold text-white">أ. فاطمة سليمان المسعودي</span>
+              <span className="text-amber-400/50 hidden sm:inline" aria-hidden="true">·</span>
+              <span className="hidden sm:inline">إعداد وتنفيذ المعلمتين:</span>
+              <span className="font-bold text-amber-300 hidden sm:inline">أمل رشيد + وفاء الزهراني</span>
             </div>
 
             <div className="space-y-3">
@@ -177,28 +180,28 @@ export const HeroSection: React.FC<HeroSectionProps> = ({ onNavigate, onSelectSt
           </p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
           {/* Card 1: Text Participation */}
           <div
             onClick={() => {
               onNavigate('student');
               if (onSelectStudentSection) onSelectStudentSection('text');
             }}
-            className="group p-6 rounded-2xl bg-white border border-slate-200 hover:border-emerald-500 hover:shadow-md transition-all duration-200 cursor-pointer flex flex-col justify-between"
+            className="group p-5 rounded-2xl bg-white border border-slate-200 hover:border-emerald-500 hover:shadow-md transition-all duration-200 cursor-pointer flex flex-col justify-between"
           >
             <div className="space-y-3">
-              <div className="w-12 h-12 rounded-xl bg-emerald-50 border border-emerald-200 flex items-center justify-center text-emerald-700 group-hover:bg-emerald-700 group-hover:text-white transition-colors duration-200">
-                <PenTool className="w-6 h-6" />
+              <div className="w-11 h-11 rounded-xl bg-emerald-50 border border-emerald-200 flex items-center justify-center text-emerald-700 group-hover:bg-emerald-700 group-hover:text-white transition-colors duration-200">
+                <PenTool className="w-5 h-5" />
               </div>
-              <h3 className="text-lg font-bold text-slate-900 group-hover:text-emerald-800 transition-colors">
-                1. المشاركات النصية والخواطر
+              <h3 className="text-base font-bold text-slate-900 group-hover:text-emerald-800 transition-colors">
+                1. المشاركات والخواطر
               </h3>
               <p className="text-xs text-slate-600 leading-relaxed">
                 سطري رسالة ولاء واعتزاز للوطن، وتأملاتك الفكرية حول واجب الدفاع عن العقيدة والوطن في ضوء المادة 34.
               </p>
             </div>
-            <div className="mt-5 pt-3 border-t border-slate-100 flex items-center justify-between text-xs font-semibold text-emerald-700">
-              <span>اكتبي رسالتك الآن</span>
+            <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between text-xs font-semibold text-emerald-700">
+              <span>اكتبي رسالتك</span>
               <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
             </div>
           </div>
@@ -209,21 +212,21 @@ export const HeroSection: React.FC<HeroSectionProps> = ({ onNavigate, onSelectSt
               onNavigate('student');
               if (onSelectStudentSection) onSelectStudentSection('drawing');
             }}
-            className="group p-6 rounded-2xl bg-white border border-slate-200 hover:border-emerald-500 hover:shadow-md transition-all duration-200 cursor-pointer flex flex-col justify-between"
+            className="group p-5 rounded-2xl bg-white border border-slate-200 hover:border-emerald-500 hover:shadow-md transition-all duration-200 cursor-pointer flex flex-col justify-between"
           >
             <div className="space-y-3">
-              <div className="w-12 h-12 rounded-xl bg-amber-50 border border-amber-200 flex items-center justify-center text-amber-700 group-hover:bg-amber-600 group-hover:text-white transition-colors duration-200">
-                <Shield className="w-6 h-6" />
+              <div className="w-11 h-11 rounded-xl bg-amber-50 border border-amber-200 flex items-center justify-center text-amber-700 group-hover:bg-amber-600 group-hover:text-white transition-colors duration-200">
+                <Shield className="w-5 h-5" />
               </div>
-              <h3 className="text-lg font-bold text-slate-900 group-hover:text-amber-800 transition-colors">
-                2. مرسم درع الوطن الرقمي
+              <h3 className="text-base font-bold text-slate-900 group-hover:text-amber-800 transition-colors">
+                2. مرسم درع الوطن
               </h3>
               <p className="text-xs text-slate-600 leading-relaxed">
-                مرسم تفاعلي للرسم الحي بالفرشاة والألوان الوطنية، أو رفع تصاميمك ورسوماتك الوطنية لحفظها في السجل السحابي.
+                مرسم تفاعلي للرسم بالألوان الوطنية، أو رفع تصاميمك ورسوماتك الوطنية لحفظها في السجل السحابي.
               </p>
             </div>
-            <div className="mt-5 pt-3 border-t border-slate-100 flex items-center justify-between text-xs font-semibold text-amber-700">
-              <span>افتحي المرسم الرقمي</span>
+            <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between text-xs font-semibold text-amber-700">
+              <span>افتحي المرسم</span>
               <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
             </div>
           </div>
@@ -234,20 +237,20 @@ export const HeroSection: React.FC<HeroSectionProps> = ({ onNavigate, onSelectSt
               onNavigate('student');
               if (onSelectStudentSection) onSelectStudentSection('survey');
             }}
-            className="group p-6 rounded-2xl bg-white border border-slate-200 hover:border-emerald-500 hover:shadow-md transition-all duration-200 cursor-pointer flex flex-col justify-between"
+            className="group p-5 rounded-2xl bg-white border border-slate-200 hover:border-emerald-500 hover:shadow-md transition-all duration-200 cursor-pointer flex flex-col justify-between"
           >
             <div className="space-y-3">
-              <div className="w-12 h-12 rounded-xl bg-blue-50 border border-blue-200 flex items-center justify-center text-blue-700 group-hover:bg-blue-700 group-hover:text-white transition-colors duration-200">
-                <FileText className="w-6 h-6" />
+              <div className="w-11 h-11 rounded-xl bg-blue-50 border border-blue-200 flex items-center justify-center text-blue-700 group-hover:bg-blue-700 group-hover:text-white transition-colors duration-200">
+                <FileText className="w-5 h-5" />
               </div>
-              <h3 className="text-lg font-bold text-slate-900 group-hover:text-blue-800 transition-colors">
-                3. الاستبانات وقياس الأثر
+              <h3 className="text-base font-bold text-slate-900 group-hover:text-blue-800 transition-colors">
+                3. الاستبانة وقياس الأثر
               </h3>
               <p className="text-xs text-slate-600 leading-relaxed">
-                استبانة قبلية وبعدية لقياس مستوى المعرفة بالواجب الدستوري والمادة 34 وتقييم تطور الوعي الوطني لدى الطالبات.
+                استبانة قبلية وبعدية لقياس مستوى المعرفة بالواجب الدستوري والمادة 34 وتقييم تطور الوعي الوطني.
               </p>
             </div>
-            <div className="mt-5 pt-3 border-t border-slate-100 flex items-center justify-between text-xs font-semibold text-blue-700">
+            <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between text-xs font-semibold text-blue-700">
               <span>تعبئة الاستبانة</span>
               <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
             </div>
@@ -256,21 +259,46 @@ export const HeroSection: React.FC<HeroSectionProps> = ({ onNavigate, onSelectSt
           {/* Card 4: Digital Book */}
           <div
             onClick={() => onNavigate('book')}
-            className="group p-6 rounded-2xl bg-white border border-slate-200 hover:border-emerald-500 hover:shadow-md transition-all duration-200 cursor-pointer flex flex-col justify-between"
+            className="group p-5 rounded-2xl bg-white border border-slate-200 hover:border-emerald-500 hover:shadow-md transition-all duration-200 cursor-pointer flex flex-col justify-between"
           >
             <div className="space-y-3">
-              <div className="w-12 h-12 rounded-xl bg-emerald-50 border border-emerald-200 flex items-center justify-center text-emerald-800 group-hover:bg-emerald-800 group-hover:text-white transition-colors duration-200">
-                <BookOpen className="w-6 h-6" />
+              <div className="w-11 h-11 rounded-xl bg-emerald-50 border border-emerald-200 flex items-center justify-center text-emerald-800 group-hover:bg-emerald-800 group-hover:text-white transition-colors duration-200">
+                <BookOpen className="w-5 h-5" />
               </div>
-              <h3 className="text-lg font-bold text-slate-900 group-hover:text-emerald-900 transition-colors">
-                4. الكتاب الرقمي «درع الوطن»
+              <h3 className="text-base font-bold text-slate-900 group-hover:text-emerald-900 transition-colors">
+                4. الكتاب الرقمي
               </h3>
               <p className="text-xs text-slate-600 leading-relaxed">
-                كتاب تصفح رقمي أنيق يوثق مضامين المبادرة، ونصوص النظام، وتأملات تربوية ووطنية إعداد المعلمتين: أمل رشيد ووفاء الزهراني.
+                كتاب تصفح رقمي يوثق مضامين المبادرة، إشراف مديرة المدرسة: أ. فاطمة سليمان المسعودي، إعداد المعلمتين: أمل رشيد ووفاء الزهراني.
               </p>
             </div>
-            <div className="mt-5 pt-3 border-t border-slate-100 flex items-center justify-between text-xs font-semibold text-emerald-800">
-              <span>تصفح صفحات الكتاب</span>
+            <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between text-xs font-semibold text-emerald-800">
+              <span>تصفح الكتاب</span>
+              <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
+            </div>
+          </div>
+
+          {/* Card 5: Official Appreciation Certificates */}
+          <div
+            onClick={() => onNavigate('certificate')}
+            className="group p-5 rounded-2xl bg-radial from-amber-50 to-white border-2 border-amber-300 hover:border-amber-500 hover:shadow-lg transition-all duration-200 cursor-pointer flex flex-col justify-between relative overflow-hidden"
+          >
+            <div className="absolute top-2 left-2 px-2 py-0.5 rounded-full bg-amber-400 text-emerald-950 font-black text-[9px]">
+              رسمي ✦
+            </div>
+            <div className="space-y-3">
+              <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-amber-400 to-amber-600 text-emerald-950 flex items-center justify-center font-bold shadow-xs group-hover:scale-105 transition-transform">
+                <Award className="w-6 h-6" />
+              </div>
+              <h3 className="text-base font-bold text-slate-900 group-hover:text-amber-800 transition-colors">
+                5. شهادات التقدير
+              </h3>
+              <p className="text-xs text-slate-600 leading-relaxed">
+                إصدار وطباعة شهادات التكريم والاعتزاز الوطني الرسمية المعتمدة باسم الطالبة وإدارة المدرسة (أ. فاطمة سليمان المسعودي) والمعلمتين بصيغة PDF.
+              </p>
+            </div>
+            <div className="mt-4 pt-3 border-t border-amber-100 flex items-center justify-between text-xs font-bold text-amber-800">
+              <span>إصدار الشهادة الآن</span>
               <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
             </div>
           </div>
@@ -286,7 +314,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({ onNavigate, onSelectSt
               الثانوية الأولى بالبدع · مبادرة درع الوطن
             </h3>
             <p className="text-xs sm:text-sm text-emerald-100/80 leading-relaxed">
-              إعداد وتنفيذ المعلمتين: <strong className="text-amber-300">أمل رشيد</strong> + <strong className="text-amber-300">وفاء الزهراني</strong>.
+              إشراف مديرة المدرسة: <strong className="text-white">أ. فاطمة سليمان المسعودي</strong> · إعداد وتنفيذ المعلمتين: <strong className="text-amber-300">أمل رشيد</strong> + <strong className="text-amber-300">وفاء الزهراني</strong>.
               نظام توعوي تفاعلي لحفظ مشاركات الطالبات، ومنحهن أوسمة الشرف وشهادات الشكر والاعتزاز.
             </p>
           </div>

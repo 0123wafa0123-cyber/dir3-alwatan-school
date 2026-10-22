@@ -104,6 +104,14 @@
   ],
   "teachers": [
     {
+      "id": "principal-1",
+      "username": "fatima_masoudi",
+      "passwordHash": "Fatima@2026",
+      "displayName": "مديرة المدرسة: أ. فاطمة سليمان المسعودي",
+      "role": "teacher_admin",
+      "school": "الثانوية الأولى بالبدع"
+    },
+    {
       "id": "teacher-1",
       "username": "amal_rashid",
       "passwordHash": "Amal@2026",

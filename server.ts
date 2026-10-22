@@ -115,6 +115,14 @@ function getInitialDb(): DatabaseState {
     claimedBoxes: [],
     teachers: [
       {
+        id: 'principal-1',
+        username: 'fatima_masoudi',
+        passwordHash: 'Fatima@2026',
+        displayName: 'مديرة المدرسة: أ. فاطمة سليمان المسعودي',
+        role: 'teacher_admin',
+        school: 'الثانوية الأولى بالبدع'
+      },
+      {
         id: 'teacher-1',
         username: 'amal_rashid',
         passwordHash: 'Amal@2026', // Plain for simplicity in prototype, compared safely
@@ -145,6 +153,18 @@ function loadDb(): DatabaseState {
     const data = JSON.parse(raw);
     if (!data.teachers || data.teachers.length === 0) {
       data.teachers = getInitialDb().teachers;
+    }
+    // Ensure Principal Fatima Masoudi is always present in teachers
+    if (!data.teachers.some((t: any) => t.username === 'fatima_masoudi')) {
+      data.teachers.unshift({
+        id: 'principal-1',
+        username: 'fatima_masoudi',
+        passwordHash: 'Fatima@2026',
+        displayName: 'مديرة المدرسة: أ. فاطمة سليمان المسعودي',
+        role: 'teacher_admin',
+        school: 'الثانوية الأولى بالبدع'
+      });
+      fs.writeFileSync(DB_FILE, JSON.stringify(data, null, 2), 'utf8');
     }
     if (!data.missionCompletions) data.missionCompletions = [];
     if (!data.claimedBoxes) data.claimedBoxes = [];
@@ -189,7 +209,7 @@ app.get('/api/status', (req, res) => {
   res.json({
     status: 'online',
     school: 'الثانوية الأولى بالبدع',
-    teachers: ['أمل رشيد', 'وفاء الزهراني'],
+    teachers: ['مديرة المدرسة: أ. فاطمة سليمان المسعودي', 'أمل رشيد', 'وفاء الزهراني'],
     initiative: 'درع الوطن - المادة 34 من النظام الأساسي للحكم',
     totalSubmissions: db.submissions.length,
     totalSurveys: db.surveys.length,
@@ -229,6 +249,44 @@ app.post('/api/auth/login', (req, res) => {
       role: teacher.role,
       school: teacher.school
     }
+  });
+});
+
+// Auth: Password Reset with School Admin Verification
+app.post('/api/auth/reset-password', (req, res) => {
+  const { username, secretCode, newPassword } = req.body;
+  if (!username || !secretCode || !newPassword) {
+    res.status(400).json({ error: 'جميع الحقول مطلوبة لإعادة تعيين كلمة المرور' });
+    return;
+  }
+
+  // School Administrative Verification Secret for الثانوية الأولى بالبدع
+  const validSecrets = ['AlBadaa2026', 'albadaa2026', 'درع_الوطن', '1447'];
+  if (!validSecrets.includes(secretCode.trim())) {
+    res.status(403).json({ error: 'رمز التحقق الإداري غير صحيح. يرجى مراجعة إدارة المدرسة.' });
+    return;
+  }
+
+  if (newPassword.length < 6) {
+    res.status(400).json({ error: 'كلمة المرور يجب ألا تقل عن 6 خانات' });
+    return;
+  }
+
+  const db = loadDb();
+  const normalizedUser = username.trim().toLowerCase();
+  const teacher = db.teachers.find((t) => t.username.toLowerCase() === normalizedUser);
+
+  if (!teacher) {
+    res.status(404).json({ error: 'حساب المعلمة غير موجود في السجل' });
+    return;
+  }
+
+  teacher.passwordHash = newPassword;
+  saveDb(db);
+
+  res.json({
+    success: true,
+    message: `تم تحديث كلمة المرور للمعلمة ${teacher.displayName} بنجاح. يمكنكِ الآن تسجيل الدخول.`
   });
 });
 
