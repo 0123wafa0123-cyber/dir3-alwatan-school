@@ -40,6 +40,14 @@ interface Submission {
   reviewedBy?: string;
   reviewedAt?: string;
   feedback?: string;
+  likesCount?: number;
+  teacherLikes?: {
+    teacherId: string;
+    teacherName: string;
+    role: string;
+    likedAt: string;
+    comment?: string;
+  }[];
 }
 
 interface SurveyRecord {
@@ -458,6 +466,60 @@ app.patch('/api/submissions/:id/status', requireTeacherAuth, (req, res) => {
     success: true,
     message: 'تم تحديث حالة المشاركة بنجاح في قاعدة البيانات',
     submission: db.submissions[subIndex]
+  });
+});
+
+// Teacher Like / Endorse submission
+app.post('/api/submissions/:id/teacher-like', (req, res) => {
+  const { id } = req.params;
+  const { teacherId, teacherName, role, comment } = req.body;
+
+  if (!teacherId || !teacherName) {
+    res.status(400).json({ error: 'بيانات المعلمة مطلوبة' });
+    return;
+  }
+
+  const db = loadDb();
+  const subIndex = db.submissions.findIndex((s) => s.id === id);
+  if (subIndex === -1) {
+    res.status(404).json({ error: 'المشاركة غير موجودة' });
+    return;
+  }
+
+  const sub = db.submissions[subIndex];
+  if (!sub.teacherLikes) {
+    sub.teacherLikes = [];
+  }
+
+  const existingIdx = sub.teacherLikes.findIndex((tl) => tl.teacherId === teacherId);
+  let isLiked = false;
+
+  if (existingIdx !== -1) {
+    // Remove like
+    sub.teacherLikes.splice(existingIdx, 1);
+    isLiked = false;
+  } else {
+    // Add like
+    sub.teacherLikes.push({
+      teacherId,
+      teacherName,
+      role: role || 'teacher',
+      likedAt: new Date().toISOString(),
+      comment: comment?.trim() || undefined
+    });
+    sub.status = 'featured';
+    isLiked = true;
+  }
+
+  sub.likesCount = sub.teacherLikes.length;
+  saveDb(db);
+
+  res.json({
+    success: true,
+    isLiked,
+    teacherLikesCount: sub.teacherLikes.length,
+    totalLikes: sub.likesCount,
+    submission: sub
   });
 });
 

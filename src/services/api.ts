@@ -933,5 +933,76 @@ export const api = {
         { badgeId: 'impact_maker', badgeTitle: 'صانعة الأثر', count: 18 }
       ]
     };
+  },
+
+  // ----------------- VIRTUAL EXHIBITION & TEACHER LIKES -----------------
+
+  async toggleTeacherLike(payload: {
+    submissionId: string;
+    teacherId: string;
+    teacherName: string;
+    role: string;
+    comment?: string;
+  }): Promise<{ success: boolean; isLiked: boolean; teacherLikesCount: number; totalLikes: number }> {
+    const { submissionId, teacherId, teacherName, role, comment } = payload;
+
+    try {
+      const res = await fetch(`/api/submissions/${submissionId}/teacher-like`, {
+        method: 'POST',
+        headers: this.getAuthHeaders(),
+        body: JSON.stringify(payload)
+      });
+      const data = await safeParseJson(res);
+      if (res.ok) return data;
+    } catch {
+      // Netlify / static fallback
+    }
+
+    // Local Storage Fallback
+    const local: Submission[] = JSON.parse(localStorage.getItem(LOCAL_SUBMISSIONS_KEY) || '[]');
+    const subIdx = local.findIndex((s) => s.id === submissionId);
+
+    const likesStorageKey = `deraa_exhibition_teacher_likes_${submissionId}`;
+    let teacherLikes: { teacherId: string; teacherName: string; role: string; likedAt: string; comment?: string }[] =
+      JSON.parse(localStorage.getItem(likesStorageKey) || '[]');
+
+    const existingIdx = teacherLikes.findIndex((tl) => tl.teacherId === teacherId);
+    let isLiked = false;
+
+    if (existingIdx !== -1) {
+      // Toggle off
+      teacherLikes.splice(existingIdx, 1);
+      isLiked = false;
+    } else {
+      // Toggle on
+      teacherLikes.push({
+        teacherId,
+        teacherName,
+        role,
+        likedAt: new Date().toISOString(),
+        comment: comment?.trim() || undefined
+      });
+      isLiked = true;
+    }
+
+    localStorage.setItem(likesStorageKey, JSON.stringify(teacherLikes));
+
+    // Update in local submissions if present
+    if (subIdx !== -1) {
+      local[subIdx].teacherLikes = teacherLikes;
+      local[subIdx].likesCount = Math.max(0, (local[subIdx].likesCount || 0) + (isLiked ? 1 : -1));
+      if (isLiked) {
+        local[subIdx].status = 'featured';
+      }
+      localStorage.setItem(LOCAL_SUBMISSIONS_KEY, JSON.stringify(local));
+    }
+
+    return {
+      success: true,
+      isLiked,
+      teacherLikesCount: teacherLikes.length,
+      totalLikes: teacherLikes.length
+    };
   }
 };
+

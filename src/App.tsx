@@ -24,7 +24,7 @@ export default function App() {
     }
     return 'home';
   });
-  const [studentInitialSection, setStudentInitialSection] = useState<'text' | 'drawing' | 'survey' | 'quiz' | 'certificate'>('text');
+  const [studentInitialSection, setStudentInitialSection] = useState<'text' | 'drawing' | 'survey' | 'quiz' | 'certificate' | 'gallery'>('text');
   const [certificateStudentName, setCertificateStudentName] = useState<string>('');
   const [certificateGrade, setCertificateGrade] = useState<string>('الصف الأول ثانوي');
   const [currentTeacher, setCurrentTeacher] = useState<TeacherUser | null>(null);
@@ -82,7 +82,7 @@ export default function App() {
     changeTab('home');
   };
 
-  const handleNavigateToStudent = (section: 'text' | 'drawing' | 'survey' | 'quiz' | 'certificate') => {
+  const handleNavigateToStudent = (section: 'text' | 'drawing' | 'survey' | 'quiz' | 'certificate' | 'gallery') => {
     setStudentInitialSection(section);
     changeTab('student');
   };
@@ -154,6 +154,7 @@ export default function App() {
               window.scrollTo({ top: 0, behavior: 'smooth' });
             }}
             onOpenCertificateHub={(name, gradeVal) => handleOpenCertificate(name, gradeVal)}
+            activeTeacher={currentTeacher}
           />
         )}
 

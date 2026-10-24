@@ -12,6 +12,14 @@ export interface Submission {
   reviewedBy?: string;
   reviewedAt?: string;
   feedback?: string;
+  likesCount?: number;
+  teacherLikes?: {
+    teacherId: string;
+    teacherName: string;
+    role: string;
+    likedAt: string;
+    comment?: string;
+  }[];
 }
 
 export interface SurveyRecord {

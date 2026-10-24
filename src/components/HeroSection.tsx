@@ -1,5 +1,5 @@
 import React from 'react';
-import { Shield, BookOpen, PenTool, CheckCircle2, ArrowLeft, Star, Heart, FileText, Award, Sparkles, Gift, Compass } from 'lucide-react';
+import { Shield, BookOpen, PenTool, CheckCircle2, ArrowLeft, Star, Heart, FileText, Award, Sparkles, Gift, Compass, Palette } from 'lucide-react';
 import shieldImage from '../assets/images/shield_of_nation_hero_1792473197101.jpg';
 import { getTodayMission } from '../constants/dailyMissions';
 import { Article34Slideshow } from './Article34Slideshow';
@@ -7,7 +7,7 @@ import { HomelandGuardiansJourney } from './HomelandGuardiansJourney';
 
 interface HeroSectionProps {
   onNavigate: (tab: 'home' | 'article34' | 'student' | 'book' | 'admin' | 'mission' | 'certificate') => void;
-  onSelectStudentSection?: (section: 'text' | 'drawing' | 'survey' | 'quiz' | 'certificate') => void;
+  onSelectStudentSection?: (section: 'text' | 'drawing' | 'survey' | 'quiz' | 'certificate' | 'gallery') => void;
 }
 
 export const HeroSection: React.FC<HeroSectionProps> = ({ onNavigate, onSelectStudentSection }) => {
@@ -194,7 +194,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({ onNavigate, onSelectSt
           </p>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
           {/* Card 1: Text Participation */}
           <div
             onClick={() => {
@@ -313,6 +313,34 @@ export const HeroSection: React.FC<HeroSectionProps> = ({ onNavigate, onSelectSt
             </div>
             <div className="mt-4 pt-3 border-t border-amber-100 flex items-center justify-between text-xs font-bold text-amber-800">
               <span>إصدار الشهادة الآن</span>
+              <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
+            </div>
+          </div>
+
+          {/* Card 6: Virtual Exhibition Gallery */}
+          <div
+            onClick={() => {
+              onNavigate('student');
+              if (onSelectStudentSection) onSelectStudentSection('gallery');
+            }}
+            className="group p-5 rounded-2xl bg-radial from-emerald-900 via-emerald-950 to-slate-950 border-2 border-amber-400 text-white hover:border-amber-300 hover:shadow-xl transition-all duration-200 cursor-pointer flex flex-col justify-between relative overflow-hidden"
+          >
+            <div className="absolute top-2 left-2 px-2 py-0.5 rounded-full bg-amber-400 text-emerald-950 font-black text-[9px] shadow-xs">
+              جديد ✦
+            </div>
+            <div className="space-y-3">
+              <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-amber-400 to-amber-600 text-emerald-950 flex items-center justify-center font-bold shadow-md group-hover:scale-105 transition-transform">
+                <Palette className="w-6 h-6" />
+              </div>
+              <h3 className="text-base font-bold text-white group-hover:text-amber-300 transition-colors">
+                6. المعرض الافتراضي
+              </h3>
+              <p className="text-xs text-emerald-100/90 leading-relaxed">
+                أروقة فنية تستعرض الرسومات والمشاركات المتميزة لطالبات ثانوية البدع مع إمكانية إعجاب وإشادة المعلمات بها.
+              </p>
+            </div>
+            <div className="mt-4 pt-3 border-t border-emerald-800 flex items-center justify-between text-xs font-bold text-amber-300">
+              <span>دخول المعرض الافتراضي</span>
               <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
             </div>
           </div>

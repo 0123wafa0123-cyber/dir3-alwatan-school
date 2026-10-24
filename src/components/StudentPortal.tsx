@@ -32,13 +32,15 @@ import {
   Share2,
   MessageCircle
 } from 'lucide-react';
-import { StudentBadge } from '../types';
+import { StudentBadge, TeacherUser } from '../types';
 import { ShareBadgeModal } from './ShareBadgeModal';
+import { VirtualExhibitionGallery } from './VirtualExhibitionGallery';
 
 interface StudentPortalProps {
-  initialSection?: 'text' | 'drawing' | 'survey' | 'quiz' | 'certificate';
+  initialSection?: 'text' | 'drawing' | 'survey' | 'quiz' | 'certificate' | 'gallery';
   onGoToDailyMission?: () => void;
   onOpenCertificateHub?: (name: string, grade: string) => void;
+  activeTeacher?: TeacherUser | null;
 }
 
 import { SCHOOL_GRADES } from '../constants/grades';
@@ -48,9 +50,10 @@ import { ShieldTextCard } from './ShieldTextCard';
 export const StudentPortal: React.FC<StudentPortalProps> = ({
   initialSection = 'text',
   onGoToDailyMission,
-  onOpenCertificateHub
+  onOpenCertificateHub,
+  activeTeacher = null
 }) => {
-  const [activeSubTab, setActiveSubTab] = useState<'text' | 'drawing' | 'survey' | 'quiz' | 'certificate'>(initialSection);
+  const [activeSubTab, setActiveSubTab] = useState<'text' | 'drawing' | 'survey' | 'quiz' | 'certificate' | 'gallery'>(initialSection);
 
   // Global student identity in this session
   const [studentName, setStudentName] = useState<string>('');
@@ -912,7 +915,7 @@ export const StudentPortal: React.FC<StudentPortalProps> = ({
       )}
 
       {/* Segmented Sub-Tabs */}
-      <div className="grid grid-cols-2 sm:grid-cols-5 gap-2 p-1.5 bg-slate-100 rounded-2xl border border-slate-200">
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2 p-1.5 bg-slate-100 rounded-2xl border border-slate-200">
         <button
           onClick={() => {
             setActiveSubTab('text');
@@ -943,6 +946,22 @@ export const StudentPortal: React.FC<StudentPortalProps> = ({
         >
           <ImageIcon className="w-4 h-4 text-amber-400" />
           <span>المرسم والتصاميم</span>
+        </button>
+
+        <button
+          onClick={() => {
+            setActiveSubTab('gallery');
+            setSuccessMessage(null);
+            setErrorMessage(null);
+          }}
+          className={`py-2.5 px-3 rounded-xl text-xs sm:text-sm font-bold transition-all cursor-pointer flex items-center justify-center gap-1.5 ${
+            activeSubTab === 'gallery'
+              ? 'bg-gradient-to-r from-amber-400 via-yellow-400 to-amber-500 text-emerald-950 font-black shadow-md ring-2 ring-amber-300'
+              : 'text-amber-900 bg-amber-50/90 hover:bg-amber-100 border border-amber-300 font-bold'
+          }`}
+        >
+          <Palette className="w-4 h-4 text-amber-500 fill-amber-500" />
+          <span>المعرض الافتراضي 🖼️</span>
         </button>
 
         <button
@@ -2376,6 +2395,14 @@ export const StudentPortal: React.FC<StudentPortalProps> = ({
             )}
           </div>
         </div>
+      )}
+
+      {/* TAB: VIRTUAL EXHIBITION GALLERY «المعرض الافتراضي لدرع الوطن» */}
+      {activeSubTab === 'gallery' && (
+        <VirtualExhibitionGallery
+          onOpenCertificateHub={onOpenCertificateHub}
+          activeTeacher={activeTeacher}
+        />
       )}
 
       {/* Social Media Sharing Modal */}
