@@ -2306,11 +2306,17 @@ export const StudentPortal: React.FC<StudentPortalProps> = ({
             </div>
 
             {/* Official Signatures & Teachers Credit */}
-            <div className="pt-8 grid grid-cols-2 gap-6 text-xs text-slate-800 max-w-lg mx-auto border-t border-amber-300">
+            <div className="pt-8 grid grid-cols-1 sm:grid-cols-3 gap-6 text-xs text-slate-800 max-w-2xl mx-auto border-t border-amber-300">
               <div className="space-y-1">
                 <p className="text-slate-500 font-medium">إعداد وتنفيذ المعلمة:</p>
                 <p className="font-bold text-emerald-950 text-sm">أمل رشيد</p>
                 <p className="text-[10px] text-amber-700">الثانوية الأولى بالبدع</p>
+              </div>
+
+              <div className="space-y-1 sm:border-x sm:border-amber-200 sm:px-2">
+                <p className="text-emerald-900 font-bold">اعتماد مديرة المدرسة:</p>
+                <p className="font-extrabold text-emerald-950 text-sm">أ. فاطمة سليمان المسعودي</p>
+                <p className="text-[10px] text-amber-700">ختم الاعتماد الرسمي</p>
               </div>
 
               <div className="space-y-1">

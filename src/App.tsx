@@ -29,13 +29,40 @@ export default function App() {
   const [certificateGrade, setCertificateGrade] = useState<string>('الصف الأول ثانوي');
   const [currentTeacher, setCurrentTeacher] = useState<TeacherUser | null>(null);
 
-  // Check and restore existing teacher login session
+  // Check and restore existing teacher login session + URL hash & secret shortcut support
   useEffect(() => {
     api.getCurrentTeacher().then((teacher) => {
       if (teacher) {
         setCurrentTeacher(teacher);
       }
     });
+
+    const handleHash = () => {
+      const hash = window.location.hash.toLowerCase();
+      if (hash === '#admin' || hash === '#login' || hash === '#dashboard') {
+        changeTab('admin');
+      }
+    };
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Secret keyboard shortcut for authorized teachers: Alt + A or Ctrl + Shift + L
+      if (
+        (e.altKey && (e.key === 'a' || e.key === 'A' || e.key === 'ش')) ||
+        (e.ctrlKey && e.shiftKey && (e.key === 'l' || e.key === 'L' || e.key === 'م'))
+      ) {
+        e.preventDefault();
+        changeTab('admin');
+      }
+    };
+
+    handleHash();
+    window.addEventListener('hashchange', handleHash);
+    window.addEventListener('keydown', handleKeyDown);
+
+    return () => {
+      window.removeEventListener('hashchange', handleHash);
+      window.removeEventListener('keydown', handleKeyDown);
+    };
   }, []);
 
   const changeTab = (tab: 'home' | 'article34' | 'student' | 'book' | 'admin' | 'mission' | 'certificate') => {
@@ -95,6 +122,7 @@ export default function App() {
               setActiveTab('home');
               window.scrollTo({ top: 0, behavior: 'smooth' });
             }}
+            onOpenCertificateHub={(name, gradeVal) => handleOpenCertificate(name, gradeVal)}
           />
         )}
 
@@ -144,7 +172,7 @@ export default function App() {
       </main>
 
       {/* Footer */}
-      <Footer />
+      <Footer onOpenAdmin={() => changeTab('admin')} />
     </div>
   );
 }

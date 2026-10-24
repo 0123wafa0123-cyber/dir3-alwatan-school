@@ -219,7 +219,8 @@ export const DigitalAchievementCardModal: React.FC<DigitalAchievementCardModalPr
           {/* Footer & Teachers Trust Seal */}
           <div className="pt-4 border-t border-amber-500/30 flex flex-col sm:flex-row items-center justify-between gap-4 text-center sm:text-right">
             <div className="space-y-0.5">
-              <span className="text-[10px] text-amber-300/80 font-bold block">إعداد وتنفيذ ومتابعة المعلمتين:</span>
+              <span className="text-[10px] text-emerald-300 font-bold block">إشراف مديرة المدرسة: أ. فاطمة سليمان المسعودي</span>
+              <span className="text-[10px] text-amber-300/80 font-bold block">إعداد وتنفيذ المعلمتين:</span>
               <p className="text-xs font-extrabold text-white print:text-slate-900">
                 أمل رشيد + وفاء الزهراني
               </p>

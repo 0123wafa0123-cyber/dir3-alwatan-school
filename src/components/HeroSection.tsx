@@ -2,6 +2,8 @@ import React from 'react';
 import { Shield, BookOpen, PenTool, CheckCircle2, ArrowLeft, Star, Heart, FileText, Award, Sparkles, Gift, Compass } from 'lucide-react';
 import shieldImage from '../assets/images/shield_of_nation_hero_1792473197101.jpg';
 import { getTodayMission } from '../constants/dailyMissions';
+import { Article34Slideshow } from './Article34Slideshow';
+import { HomelandGuardiansJourney } from './HomelandGuardiansJourney';
 
 interface HeroSectionProps {
   onNavigate: (tab: 'home' | 'article34' | 'student' | 'book' | 'admin' | 'mission' | 'certificate') => void;
@@ -165,6 +167,18 @@ export const HeroSection: React.FC<HeroSectionProps> = ({ onNavigate, onSelectSt
           </div>
         </div>
       </section>
+
+      {/* Homeland Guardians Journey Map «رحلة حماة الوطن» */}
+      <HomelandGuardiansJourney
+        onNavigate={onNavigate}
+        onSelectStudentSection={onSelectStudentSection}
+      />
+
+      {/* Interactive Visual Awareness Slideshow - رحلة توعوية حول المادة 34 */}
+      <Article34Slideshow
+        onNavigate={onNavigate}
+        onSelectStudentSection={onSelectStudentSection}
+      />
 
       {/* Main Pillars Navigation Cards */}
       <section className="space-y-6">

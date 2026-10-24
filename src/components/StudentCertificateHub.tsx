@@ -558,12 +558,20 @@ export const StudentCertificateHub: React.FC<StudentCertificateHubProps> = ({
               <div className="w-16 h-0.5 bg-amber-400 mx-auto mt-1" />
             </div>
 
-            {/* Official Initiative Seal Center */}
-            <div className="flex flex-col items-center justify-center space-y-1">
+            {/* Official Initiative Seal & Principal Approval Center */}
+            <div className="flex flex-col items-center justify-center space-y-1.5">
               <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-full border-4 border-amber-500/80 bg-gradient-to-br from-amber-400/20 to-amber-500/30 flex flex-col items-center justify-center p-2 text-center shadow-inner relative">
-                <Shield className="w-6 h-6 text-amber-500 fill-amber-500/20" />
+                <Shield className="w-5 h-5 text-amber-500 fill-amber-500/20" />
                 <span className="text-[8px] font-black text-amber-600 uppercase tracking-tighter">ختم الاعتماد الرسمي</span>
                 <span className="text-[7px] text-emerald-800 font-bold">درع الوطن · 1447هـ</span>
+              </div>
+              <div className="space-y-0.5">
+                <p className={`text-[11px] font-bold ${certificateTheme === 'emerald_classic' ? 'text-amber-300' : 'text-emerald-900'}`}>
+                  اعتماد مديرة المدرسة:
+                </p>
+                <p className={`font-extrabold text-xs sm:text-sm ${certificateTheme === 'emerald_classic' ? 'text-white' : 'text-emerald-950'}`}>
+                  أ. فاطمة سليمان المسعودي
+                </p>
               </div>
               <span className="text-[9px] text-slate-400 font-mono">
                 رقم التوثيق: DW-{studentName ? studentName.length * 107 : 3400}-{Date.now().toString().slice(-4)}

@@ -37,10 +37,15 @@ export const Navbar: React.FC<NavbarProps> = ({
 
       {/* Main Top Bar: 3-Zone Contract */}
       <div className="max-w-7xl mx-auto px-4 sm:px-8 h-16 flex items-center justify-between gap-8">
-        {/* Zone 1: Brand Wordmark */}
+        {/* Zone 1: Brand Wordmark (Double-click allows authorized staff to open admin) */}
         <button
           onClick={() => setActiveTab('home')}
+          onDoubleClick={(e) => {
+            e.preventDefault();
+            setActiveTab('admin');
+          }}
           className="flex items-center gap-3 text-right group cursor-pointer focus:outline-hidden"
+          title="دِرْعُ الوَطَن - الثانوية الأولى بالبدع"
         >
           <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-800 to-emerald-950 border border-amber-400/40 flex items-center justify-center text-amber-400 shadow-sm group-hover:scale-105 transition-transform duration-200 shrink-0">
             <Shield className="w-5 h-5 fill-amber-400/20" />
@@ -132,7 +137,7 @@ export const Navbar: React.FC<NavbarProps> = ({
           </button>
         </nav>
 
-        {/* Zone 3: Primary Action / Admin Portal */}
+        {/* Zone 3: Action Area - Student CTA or Teacher Session */}
         <div className="flex items-center gap-3 shrink-0">
           {isAdminLoggedIn ? (
             <div className="flex items-center gap-2">
@@ -145,7 +150,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                 }`}
               >
                 <LayoutDashboard className="w-4 h-4 text-amber-500" />
-                <span className="hidden sm:inline">لوحة التحكم: {teacherName || 'المعلمة'}</span>
+                <span className="hidden sm:inline">لوحة التحكم: {teacherName || 'الإدارة'}</span>
                 <span className="sm:hidden">الإدارة</span>
               </button>
               <button
@@ -158,11 +163,11 @@ export const Navbar: React.FC<NavbarProps> = ({
             </div>
           ) : (
             <button
-              onClick={() => setActiveTab('admin')}
+              onClick={() => setActiveTab('student')}
               className="px-4 py-2 text-xs font-semibold text-white bg-gradient-to-r from-emerald-800 to-emerald-950 hover:from-emerald-700 hover:to-emerald-900 rounded-lg shadow-xs hover:shadow-sm transition-all duration-200 flex items-center gap-1.5 cursor-pointer border border-amber-400/30 whitespace-nowrap"
             >
-              <UserCheck className="w-3.5 h-3.5 text-amber-400" />
-              <span>دخول الإدارة والمعلمات</span>
+              <PenTool className="w-3.5 h-3.5 text-amber-400" />
+              <span>شاركي في المبادرة</span>
             </button>
           )}
         </div>
@@ -230,15 +235,17 @@ export const Navbar: React.FC<NavbarProps> = ({
           <span>الكتاب</span>
         </button>
 
-        <button
-          onClick={() => setActiveTab('admin')}
-          className={`flex flex-col items-center gap-1 py-1 px-2 rounded-md ${
-            activeTab === 'admin' ? 'text-emerald-800 font-bold bg-emerald-100/50' : 'hover:text-emerald-700'
-          }`}
-        >
-          <LayoutDashboard className="w-4 h-4" />
-          <span>الإدارة</span>
-        </button>
+        {isAdminLoggedIn && (
+          <button
+            onClick={() => setActiveTab('admin')}
+            className={`flex flex-col items-center gap-1 py-1 px-2 rounded-md ${
+              activeTab === 'admin' ? 'text-emerald-800 font-bold bg-emerald-100/50' : 'hover:text-emerald-700'
+            }`}
+          >
+            <LayoutDashboard className="w-4 h-4 text-amber-500" />
+            <span>لوحة التحكم</span>
+          </button>
+        )}
       </div>
     </header>
   );

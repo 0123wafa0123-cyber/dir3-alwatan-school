@@ -49,8 +49,10 @@ export const DigitalBook: React.FC = () => {
             </p>
 
             <div className="pt-4 border-t border-emerald-800/80 space-y-2 text-xs">
-              <div className="text-amber-300 font-bold">إعداد وتنفيذ المعلمتين:</div>
-              <div className="text-base font-bold text-white">أمل رشيد + وفاء الزهراني</div>
+              <div className="text-amber-300 font-bold">إشراف مديرة المدرسة:</div>
+              <div className="text-base font-bold text-white">أ. فاطمة سليمان المسعودي</div>
+              <div className="text-amber-300/90 font-bold pt-1">إعداد وتنفيذ المعلمتين:</div>
+              <div className="text-sm font-bold text-emerald-100">أمل رشيد + وفاء الزهراني</div>
               <div className="text-emerald-300/80">الثانوية الأولى بالبدع · المملكة العربية السعودية</div>
             </div>
 
@@ -77,9 +79,11 @@ export const DigitalBook: React.FC = () => {
         <div className="space-y-6 text-right">
           <div className="p-4 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-950">
             <h3 className="font-bold text-lg text-emerald-900 mb-1">
-              مقدمة المعلمتين: أمل رشيد + وفاء الزهراني
+              مبادرة درع الوطن · الثانوية الأولى بالبدع
             </h3>
-            <p className="text-xs text-emerald-800">الثانوية الأولى بالبدع</p>
+            <p className="text-xs text-emerald-800">
+              إشراف مديرة المدرسة: <strong>أ. فاطمة سليمان المسعودي</strong> · إعداد وتنفيذ المعلمتين: <strong>أمل رشيد + وفاء الزهراني</strong>
+            </p>
           </div>
 
           <div className="space-y-4 text-sm text-slate-700 leading-relaxed">
@@ -344,7 +348,7 @@ export const DigitalBook: React.FC = () => {
 
         {currentPageData.type !== 'cover' && (
           <div className="flex items-center justify-between pt-6 mt-8 border-t border-slate-100 text-[11px] text-slate-400">
-            <span>إعداد المعلمتين: أمل رشيد + وفاء الزهراني</span>
+            <span>إشراف: أ. فاطمة سليمان المسعودي · إعداد: أمل رشيد + وفاء الزهراني</span>
             <span className="font-mono">{currentPage + 1} / {bookPages.length}</span>
           </div>
         )}

@@ -738,10 +738,29 @@ export const api = {
       });
     };
 
-    if (totalCount >= 1) awardLocalBadge('ambassador_awareness', 'سفيرة الوعي', 'Compass', 'اجتياز مهمة الوعي الدستوري والمادة 34');
-    if (totalCount >= 2) awardLocalBadge('values_guardian', 'حامية القيم', 'Shield', 'صيانة قيم المجتمع والمواطنة الرقمية');
-    if (totalCount >= 3) awardLocalBadge('participation_star', 'نجمة المشاركة', 'Star', 'المثابرة في إنجاز مهمات درع الوطن اليومية');
-    if (totalCount >= 5) awardLocalBadge('impact_maker', 'صانعة الأثر', 'Award', 'صناعة الأثر الإيجابي والتميز في درع الوطن');
+    const localBadgesKey = `deraa_awarded_badge_ids_${payload.studentName}_${payload.grade}`.toLowerCase();
+    const alreadyAwardedIds: string[] = JSON.parse(localStorage.getItem(localBadgesKey) || '[]');
+
+    const checkAndAwardBadge = (id: string, title: string, icon: string, reason: string) => {
+      if (!alreadyAwardedIds.includes(id)) {
+        awardLocalBadge(id, title, icon, reason);
+        alreadyAwardedIds.push(id);
+      }
+    };
+
+    if (totalCount >= 1) checkAndAwardBadge('ambassador_awareness', 'سفيرة الوعي', 'Compass', 'اجتياز مهمة الوعي الدستوري وإتقان مضامين المادة 34');
+    if (totalCount >= 2) checkAndAwardBadge('values_guardian', 'حامية القيم', 'Shield', 'صيانة قيم المجتمع والمواطنة الرقمية');
+    if (totalCount >= 3) checkAndAwardBadge('participation_star', 'نجمة المشاركة', 'Star', 'المثابرة في إنجاز مهمات درع الوطن اليومية');
+    if (totalCount >= 5) checkAndAwardBadge('impact_maker', 'صانعة الأثر', 'Award', 'صناعة الأثر الإيجابي والتميز في درع الوطن');
+
+    localStorage.setItem(localBadgesKey, JSON.stringify(alreadyAwardedIds));
+
+    // Also persist into global local badges for student portal
+    if (newBadges.length > 0) {
+      const allLocalBadges: StudentBadge[] = JSON.parse(localStorage.getItem(LOCAL_BADGES_KEY) || '[]');
+      newBadges.forEach((nb) => allLocalBadges.push(nb));
+      localStorage.setItem(LOCAL_BADGES_KEY, JSON.stringify(allLocalBadges));
+    }
 
     return {
       success: true,

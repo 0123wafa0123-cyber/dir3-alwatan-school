@@ -41,7 +41,7 @@ export const Article34Showcase: React.FC<Article34ShowcaseProps> = ({ onGoToPart
           <div className="pt-4 border-t border-emerald-800/60 max-w-xl mx-auto flex flex-wrap items-center justify-between text-xs text-emerald-200/90 gap-2">
             <span>المملكة العربية السعودية</span>
             <span>الثانوية الأولى بالبدع</span>
-            <span>إعداد المعلمتين: أمل رشيد + وفاء الزهراني</span>
+            <span>إشراف: أ. فاطمة سليمان المسعودي · إعداد: أمل رشيد + وفاء الزهراني</span>
           </div>
         </div>
       </div>

@@ -34,17 +34,20 @@ import {
 import { SCHOOL_GRADES } from '../constants/grades';
 import { api } from '../services/api';
 import { DigitalAchievementCardModal } from './DigitalAchievementCardModal';
+import { MissionSuccessModal } from './MissionSuccessModal';
 
 interface DailyMissionInteractiveProps {
   onBackToHome?: () => void;
   defaultStudentName?: string;
   defaultGrade?: string;
+  onOpenCertificateHub?: (name: string, grade: string) => void;
 }
 
 export const DailyMissionInteractive: React.FC<DailyMissionInteractiveProps> = ({
   onBackToHome,
   defaultStudentName = '',
-  defaultGrade = SCHOOL_GRADES[0]
+  defaultGrade = SCHOOL_GRADES[0],
+  onOpenCertificateHub
 }) => {
   // Student Identity
   const [studentName, setStudentName] = useState<string>(defaultStudentName);
@@ -87,6 +90,14 @@ export const DailyMissionInteractive: React.FC<DailyMissionInteractiveProps> = (
   const [isAchievementModalOpen, setIsAchievementModalOpen] = useState<boolean>(false);
   const [isBoxModalOpen, setIsBoxModalOpen] = useState<boolean>(false);
   const [boxClaimMessage, setBoxClaimMessage] = useState<string | null>(null);
+
+  // Confetti Success Popup Modal
+  const [isSuccessModalOpen, setIsSuccessModalOpen] = useState<boolean>(false);
+  const [successModalData, setSuccessModalData] = useState<{
+    pointsEarned: number;
+    isCorrect: boolean;
+    newBadges?: StudentBadge[];
+  } | null>(null);
 
   // Load progress and classes
   const loadData = async (name: string, gr: string) => {
@@ -150,6 +161,15 @@ export const DailyMissionInteractive: React.FC<DailyMissionInteractiveProps> = (
           explanation: todayMission.explanation,
           newBadges: res.newBadges
         });
+
+        // Trigger celebratory Confetti modal
+        setSuccessModalData({
+          pointsEarned: earnedPoints,
+          isCorrect,
+          newBadges: res.newBadges
+        });
+        setIsSuccessModalOpen(true);
+
         // Refresh progress
         await loadData(studentName, grade);
       }
@@ -849,6 +869,22 @@ export const DailyMissionInteractive: React.FC<DailyMissionInteractiveProps> = (
         grade={grade}
         progress={progress}
       />
+
+      {/* Confetti Celebration Modal when completing mission */}
+      {isSuccessModalOpen && successModalData && (
+        <MissionSuccessModal
+          isOpen={isSuccessModalOpen}
+          onClose={() => setIsSuccessModalOpen(false)}
+          studentName={studentName}
+          grade={grade}
+          missionTitle={todayMission.title}
+          pointsEarned={successModalData.pointsEarned}
+          isCorrect={successModalData.isCorrect}
+          newBadges={successModalData.newBadges}
+          onOpenAchievementCard={() => setIsAchievementModalOpen(true)}
+          onOpenCertificateHub={onOpenCertificateHub}
+        />
+      )}
 
       {/* Weekly Box Congratulations Modal */}
       {isBoxModalOpen && (

@@ -30,7 +30,8 @@ import {
   TrendingUp,
   Calendar,
   FileDown,
-  Loader2
+  Loader2,
+  Crown
 } from 'lucide-react';
 import {
   PieChart as RechartsPieChart,
@@ -49,6 +50,7 @@ import {
 } from 'recharts';
 import { getShieldTemplate } from '../constants/templates';
 import { ShieldTextCard } from './ShieldTextCard';
+import { HomelandGuardiansHonorRoll } from './HomelandGuardiansHonorRoll';
 import heroShieldImg from '../assets/images/shield_of_nation_hero_1792473197101.jpg';
 
 interface TeacherDashboardProps {
@@ -84,8 +86,8 @@ export const TeacherDashboard: React.FC<TeacherDashboardProps> = ({
     message: ''
   });
 
-// Dashboard views
-  const [activeTab, setActiveTab] = useState<'charts' | 'submissions' | 'students' | 'analytics' | 'report' | 'missions'>('charts');
+  // Dashboard views
+  const [activeTab, setActiveTab] = useState<'charts' | 'submissions' | 'students' | 'honor_roll' | 'analytics' | 'report' | 'missions'>('charts');
 
   // Data states
   const [submissions, setSubmissions] = useState<Submission[]>([]);
@@ -807,6 +809,18 @@ export const TeacherDashboard: React.FC<TeacherDashboardProps> = ({
         </button>
 
         <button
+          onClick={() => setActiveTab('honor_roll')}
+          className={`px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all cursor-pointer flex items-center gap-2 ${
+            activeTab === 'honor_roll'
+              ? 'bg-gradient-to-r from-amber-400 via-yellow-400 to-amber-500 text-emerald-950 font-black shadow-md ring-2 ring-amber-300'
+              : 'text-amber-800 bg-amber-50 hover:bg-amber-100 border border-amber-300/80 font-bold'
+          }`}
+        >
+          <Crown className="w-4 h-4 text-amber-500 fill-amber-500" />
+          <span>لوحة شرف حماة الوطن 🏆</span>
+        </button>
+
+        <button
           onClick={() => setActiveTab('analytics')}
           className={`px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all cursor-pointer flex items-center gap-2 ${
             activeTab === 'analytics'
@@ -1402,6 +1416,17 @@ export const TeacherDashboard: React.FC<TeacherDashboardProps> = ({
             </div>
           )}
         </div>
+      )}
+
+      {/* TAB: HOMELAND GUARDIANS HONOR ROLL «لوحة شرف حماة الوطن» */}
+      {activeTab === 'honor_roll' && (
+        <HomelandGuardiansHonorRoll
+          submissions={submissions}
+          students={students}
+          missionStats={missionStats}
+          onOpenStudentCertificate={onOpenStudentCertificate}
+          currentTeacher={currentTeacher}
+        />
       )}
 
       {/* TAB 3: SURVEY ANALYTICS & IMPACT MEASUREMENT */}
