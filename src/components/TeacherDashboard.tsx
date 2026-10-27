@@ -31,7 +31,9 @@ import {
   Calendar,
   FileDown,
   Loader2,
-  Crown
+  Crown,
+  FileSpreadsheet,
+  Table
 } from 'lucide-react';
 import {
   PieChart as RechartsPieChart,
@@ -51,6 +53,8 @@ import {
 import { getShieldTemplate } from '../constants/templates';
 import { ShieldTextCard } from './ShieldTextCard';
 import { HomelandGuardiansHonorRoll } from './HomelandGuardiansHonorRoll';
+import { GoogleSheetsSyncManager } from './GoogleSheetsSyncManager';
+import { EngagementDataTable } from './EngagementDataTable';
 import heroShieldImg from '../assets/images/shield_of_nation_hero_1792473197101.jpg';
 
 interface TeacherDashboardProps {
@@ -87,7 +91,7 @@ export const TeacherDashboard: React.FC<TeacherDashboardProps> = ({
   });
 
   // Dashboard views
-  const [activeTab, setActiveTab] = useState<'charts' | 'submissions' | 'students' | 'honor_roll' | 'analytics' | 'report' | 'missions'>('charts');
+  const [activeTab, setActiveTab] = useState<'charts' | 'data_table' | 'submissions' | 'students' | 'honor_roll' | 'analytics' | 'report' | 'missions' | 'sheets'>('charts');
 
   // Data states
   const [submissions, setSubmissions] = useState<Submission[]>([]);
@@ -337,15 +341,12 @@ export const TeacherDashboard: React.FC<TeacherDashboardProps> = ({
       setTeacherNote('');
       fetchData();
     } catch (err: any) {
-      alert(err.message || 'فشل التحديث');
+      setFeedbackMsg(err.message || 'فشل التحديث');
     }
   };
 
   // Delete submission
   const handleDeleteSubmission = async (id: string) => {
-    if (!window.confirm('هل أنت متأكدة من حذف هذه المشاركة نهائياً من قاعدة البيانات السحابية؟')) {
-      return;
-    }
     try {
       await api.deleteSubmission(id);
       setFeedbackMsg('تم حذف المشاركة بنجاح');
@@ -353,13 +354,18 @@ export const TeacherDashboard: React.FC<TeacherDashboardProps> = ({
       setSelectedSubmission(null);
       fetchData();
     } catch (err: any) {
-      alert(err.message || 'فشل الحذف');
+      setFeedbackMsg(err.message || 'فشل الحذف');
     }
   };
 
-  // Export CSV
+  // Export CSV without window.open
   const handleDownloadCsv = () => {
-    window.open(api.getExportCsvUrl(), '_blank');
+    const a = document.createElement('a');
+    a.href = api.getExportCsvUrl();
+    a.download = `deraa_alwatan_submissions_${new Date().toISOString().slice(0, 10)}.csv`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
   };
 
   // PDF Export ref & state
@@ -693,6 +699,24 @@ export const TeacherDashboard: React.FC<TeacherDashboardProps> = ({
             </button>
 
             <button
+              onClick={() => setActiveTab('data_table')}
+              className="px-3.5 py-2.5 rounded-xl bg-gradient-to-r from-amber-400 to-amber-300 hover:from-amber-300 hover:to-amber-200 text-emerald-950 text-xs font-black flex items-center gap-1.5 transition-all cursor-pointer shadow-md transform hover:scale-[1.02]"
+              title="جدول بيانات التفاعل وتصدير CSV و PDF الدقيق"
+            >
+              <Table className="w-4 h-4 text-emerald-950" />
+              <span>جدول التفاعل 📋</span>
+            </button>
+
+            <button
+              onClick={() => setActiveTab('sheets')}
+              className="px-3.5 py-2.5 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-700 hover:from-emerald-500 hover:to-teal-600 text-white text-xs font-black flex items-center gap-1.5 transition-all cursor-pointer shadow-md ring-1 ring-emerald-400/40"
+              title="السجل السحابي Google Sheets"
+            >
+              <FileSpreadsheet className="w-4 h-4 text-amber-300" />
+              <span>Google Sheets 📊</span>
+            </button>
+
+            <button
               onClick={handleDownloadCsv}
               className="px-3.5 py-2.5 rounded-xl bg-amber-400 hover:bg-amber-300 text-emerald-950 text-xs font-bold flex items-center gap-1.5 transition-colors cursor-pointer shadow-sm"
               title="تصدير إلى Excel"
@@ -785,6 +809,18 @@ export const TeacherDashboard: React.FC<TeacherDashboardProps> = ({
         </button>
 
         <button
+          onClick={() => setActiveTab('data_table')}
+          className={`px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all cursor-pointer flex items-center gap-2 ${
+            activeTab === 'data_table'
+              ? 'bg-gradient-to-r from-emerald-800 to-teal-800 text-white shadow-md ring-2 ring-emerald-400'
+              : 'text-emerald-950 bg-emerald-50 hover:bg-emerald-100 border border-emerald-300 font-bold'
+          }`}
+        >
+          <Table className="w-4 h-4 text-emerald-600" />
+          <span>جدول بيانات التفاعل ({submissions.length}) 📋</span>
+        </button>
+
+        <button
           onClick={() => setActiveTab('submissions')}
           className={`px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all cursor-pointer flex items-center gap-2 ${
             activeTab === 'submissions'
@@ -842,6 +878,18 @@ export const TeacherDashboard: React.FC<TeacherDashboardProps> = ({
         >
           <Sparkles className="w-4 h-4 text-amber-400" />
           <span>مهمات الدرع اليومية ({missionStats?.totalMissionsCompleted || 0})</span>
+        </button>
+
+        <button
+          onClick={() => setActiveTab('sheets')}
+          className={`px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all cursor-pointer flex items-center gap-2 ${
+            activeTab === 'sheets'
+              ? 'bg-gradient-to-r from-emerald-800 to-teal-800 text-white shadow-md ring-2 ring-emerald-400'
+              : 'text-emerald-900 bg-emerald-50 hover:bg-emerald-100 border border-emerald-300 font-bold'
+          }`}
+        >
+          <FileSpreadsheet className="w-4 h-4 text-emerald-600" />
+          <span>Google Sheets السحابي 📊</span>
         </button>
 
         <button
@@ -1933,6 +1981,27 @@ export const TeacherDashboard: React.FC<TeacherDashboardProps> = ({
             </div>
           </div>
         </div>
+      )}
+
+      {/* TAB: INTERACTIVE ENGAGEMENT DATA TABLE */}
+      {activeTab === 'data_table' && (
+        <EngagementDataTable
+          submissions={submissions}
+          currentTeacher={currentTeacher}
+          onRefreshData={fetchData}
+          onUpdateStatus={handleStatusChange}
+          onDeleteSubmission={handleDeleteSubmission}
+          onOpenStudentCertificate={onOpenStudentCertificate}
+        />
+      )}
+
+      {/* TAB 7: GOOGLE SHEETS CLOUD SYNC MANAGER */}
+      {activeTab === 'sheets' && (
+        <GoogleSheetsSyncManager
+          submissions={submissions}
+          currentTeacher={currentTeacher}
+          onRefreshData={fetchData}
+        />
       )}
 
       {/* Submission Review & Details Modal */}

@@ -148,7 +148,13 @@ export const StudentCertificateHub: React.FC<StudentCertificateHubProps> = ({
       `إشراف المعلمتين: أمل رشيد ووفاء الزهراني.\n` +
       `رابط المنصة: ${window.location.origin}`;
     
-    window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`, '_blank');
+    const a = document.createElement('a');
+    a.href = `https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`;
+    a.target = '_blank';
+    a.rel = 'noopener noreferrer';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
   };
 
   // Copy Verification Link

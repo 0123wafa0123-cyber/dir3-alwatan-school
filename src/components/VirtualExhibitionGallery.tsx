@@ -25,8 +25,6 @@ import {
 import { Submission, TeacherUser } from '../types';
 import { SCHOOL_GRADES } from '../constants/grades';
 import { api } from '../services/api';
-import studentPaintingImg from '../assets/images/student_national_painting_1792870985267.jpg';
-import calligraphyArtImg from '../assets/images/calligraphy_art_piece_1792871005873.jpg';
 import shieldHeroImg from '../assets/images/shield_of_nation_hero_1792473197101.jpg';
 
 interface ExhibitionItem {
@@ -110,151 +108,23 @@ export const VirtualExhibitionGallery: React.FC<VirtualExhibitionGalleryProps> =
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [feedbackToast, setFeedbackToast] = useState<string | null>(null);
 
-  // Default curated benchmark artworks & letters from Al-Bada'a First Secondary
-  const benchmarkExhibits: ExhibitionItem[] = useMemo(() => [
-    {
-      id: 'exhibit-art-1',
-      studentName: 'نورة خالد المسعودي',
-      grade: 'الصف الثالث ثانوي',
-      type: 'drawing',
-      title: 'راية التوحيد وسياج المادة 34',
-      content: 'لوحة زيتية تشكيلية تجسد ثلاثية الدفاع عن العقيدة والمجتمع والوطن، تحيط بها جبال البدع الشامخة وراية التوحيد الخفاقة كدرع حصين لأمتنا.',
-      imageUrl: studentPaintingImg,
-      createdAt: '2026-10-24T09:30:00.000Z',
-      likesCount: 28,
-      isFeatured: true,
-      stationTag: 'قمة المجد الوطنية',
-      teacherLikes: [
-        {
-          teacherId: 'fatima_masoudi',
-          teacherName: 'مديرة المدرسة: أ. فاطمة سليمان المسعودي',
-          role: 'إشادة إدارة المدرسة',
-          likedAt: '2026-10-24T10:00:00.000Z',
-          comment: 'عمل فني وطني مبهر يعكس وعياً دستورياً وحساً جمالياً فائقاً لطالبات الثانوية الأولى بالبدع.'
-        },
-        {
-          teacherId: 'amal_rashid',
-          teacherName: 'المعلمة أمل رشيد',
-          role: 'معلمة المبادرة',
-          likedAt: '2026-10-24T10:15:00.000Z',
-          comment: 'بارك الله في ريشتكِ يا نورة، تجسيد حي لمفهوم درع الوطن.'
-        }
-      ]
-    },
-    {
-      id: 'exhibit-art-2',
-      studentName: 'سارة فهد الحويطي',
-      grade: 'الصف الثاني ثانوي',
-      type: 'drawing',
-      title: 'مخطوطة النور الدستوري والأمن الفكري',
-      content: 'تصميم فني وزخرفة إسلامية تبرز نص المادة (34) بريشة الخط العربي المذهب، تعبيراً عن قدسية واجب الدفاع عن ثوابت المجتمع.',
-      imageUrl: calligraphyArtImg,
-      createdAt: '2026-10-24T08:45:00.000Z',
-      likesCount: 24,
-      isFeatured: true,
-      stationTag: 'محطة حصن الفكر',
-      teacherLikes: [
-        {
-          teacherId: 'wafa_alzahrani',
-          teacherName: 'المعلمة وفاء الزهراني',
-          role: 'معلمة المبادرة',
-          likedAt: '2026-10-24T09:10:00.000Z',
-          comment: 'خط بديع وزخرفة تشرح الصدر، فخورون بإبداعكِ يا سارة!'
-        },
-        {
-          teacherId: 'amal_rashid',
-          teacherName: 'المعلمة أمل رشيد',
-          role: 'معلمة المبادرة',
-          likedAt: '2026-10-24T09:30:00.000Z',
-          comment: 'لوحة نالت إعجاب واعتزاز جميع منسوبات المدرسة.'
-        }
-      ]
-    },
-    {
-      id: 'exhibit-text-1',
-      studentName: 'ريم محمد العمراني',
-      grade: 'الصف الأول ثانوي',
-      type: 'text',
-      title: 'رسالة ولاء: حصن الفكر وصيانة ثغور المجتمع',
-      content: '«إن الدفاع عن وطني لا ينحصر في حمل السلاح في ميادين الوغى فحسب، بل يبدأ من عقلي وفكري.. حين أرفض ترويج شائعة مغرضة، وحين أتمسك بقيمي الإسلامية وهويتي السعودية، وحين أجدّ في دراستي بالثانوية الأولى بالبدع لأكون لبنة صالحة تسهم في رفعة هذا الوطن العظيم.. أنا درعٌ لوطني كما هو درعي وفخري دائماً.»',
-      backgroundTemplate: 'emerald-shield',
-      createdAt: '2026-10-24T07:20:00.000Z',
-      likesCount: 31,
-      isFeatured: true,
-      stationTag: 'محطة صانعات الأثر',
-      teacherLikes: [
-        {
-          teacherId: 'fatima_masoudi',
-          teacherName: 'مديرة المدرسة: أ. فاطمة سليمان المسعودي',
-          role: 'إشادة إدارة المدرسة',
-          likedAt: '2026-10-24T08:00:00.000Z',
-          comment: 'كلمات تنبض بالوعي والولاء الحقيقي، نموذج يُحتذى به لطالباتنا.'
-        },
-        {
-          teacherId: 'wafa_alzahrani',
-          teacherName: 'المعلمة وفاء الزهراني',
-          role: 'معلمة المبادرة',
-          likedAt: '2026-10-24T08:25:00.000Z',
-          comment: 'قلم صادق يترجم روح المادة 34 بأجمل العبارات.'
-        }
-      ]
-    },
-    {
-      id: 'exhibit-text-2',
-      studentName: 'شروق أحمد البلوي',
-      grade: 'الصف الثالث ثانوي',
-      type: 'text',
-      title: 'خواطر دستورية: عهد الفتاة السعودية للملك والوطن',
-      content: '«تأملتُ المادة 34 فوجدتها تاجاً يرسم طريق الشرف والمواطنة الصالحة. إن بلادنا التي أكرمها الله بالحرمين الشريفين وقيادة رشيدة تسهر على أمننا، تستحق منا كل غالٍ ونفيس. نجدد العهد بأن نكون سداً منيعاً ضد كل فكرٍ ضال، وسفراء للوعي والمعرفة في كل محفل.»',
-      backgroundTemplate: 'royal-gold',
-      createdAt: '2026-10-24T06:15:00.000Z',
-      likesCount: 19,
-      isFeatured: true,
-      stationTag: 'محطة النور الدستوري',
-      teacherLikes: [
-        {
-          teacherId: 'amal_rashid',
-          teacherName: 'المعلمة أمل رشيد',
-          role: 'معلمة المبادرة',
-          likedAt: '2026-10-24T07:00:00.000Z',
-          comment: 'فخر واعتزاز بثقتكِ ووعيكِ الوطني يا شروق.'
-        }
-      ]
-    },
-    {
-      id: 'exhibit-art-3',
-      studentName: 'لمى سعود الزهراني',
-      grade: 'الصف الثاني ثانوي',
-      type: 'drawing',
-      title: 'رمزية الدرع الأخضر ونخلة العطاء',
-      content: 'لوحة رقمية تمثل درعاً واقياً منقوشاً بالسيفين والنخلة، كرمز للعدل والقوة والرخاء المستمر في بلادنا المعطاءة.',
-      imageUrl: shieldHeroImg,
-      createdAt: '2026-10-23T11:40:00.000Z',
-      likesCount: 22,
-      isFeatured: false,
-      stationTag: 'محطة نجمة الميدان',
-      teacherLikes: [
-        {
-          teacherId: 'wafa_alzahrani',
-          teacherName: 'المعلمة وفاء الزهراني',
-          role: 'معلمة المبادرة',
-          likedAt: '2026-10-23T12:00:00.000Z',
-          comment: 'إتقان رائع للتدرجات الخضراء والذهبية.'
-        }
-      ]
-    }
-  ], []);
-
-  // Fetch and combine live submissions with benchmark exhibits
+  // Fetch and display ONLY real student submissions from the database / localStorage
   const loadExhibitionData = async () => {
     setIsLoading(true);
     try {
       const res = await api.getSubmissions({ status: 'all' });
       const liveSubs = res.submissions || [];
 
-      // Transform relevant submissions (drawings and text with content)
+      // Transform ONLY real, actual submissions (drawings and text with content)
       const convertedLiveExhibits: ExhibitionItem[] = liveSubs
-        .filter((s) => s.type === 'drawing' || s.type === 'text')
+        .filter(
+          (s) =>
+            (s.type === 'drawing' || s.type === 'text') &&
+            s.studentName &&
+            s.studentName.trim().length > 0 &&
+            !s.studentName.includes('تجريب') &&
+            !s.studentName.toLowerCase().includes('test')
+        )
         .map((s) => {
           // Retrieve stored teacher likes for this sub if any
           let teacherLikes = s.teacherLikes || [];
@@ -269,36 +139,25 @@ export const VirtualExhibitionGallery: React.FC<VirtualExhibitionGalleryProps> =
 
           return {
             id: s.id,
-            studentName: s.studentName,
-            grade: s.grade,
+            studentName: s.studentName.trim(),
+            grade: s.grade || 'غير محدد',
             type: s.type as 'drawing' | 'text',
             title: s.title || (s.type === 'drawing' ? 'لوحة وطنية' : 'مشاركة ولاء'),
             content: s.content || '',
             imageUrl: s.fileUrl,
             backgroundTemplate: s.backgroundTemplate,
             createdAt: s.createdAt,
-            likesCount: Math.max(s.likesCount || 0, teacherLikes.length + 3),
+            likesCount: Math.max(s.likesCount || 0, teacherLikes.length),
             teacherLikes,
             isFeatured: s.status === 'featured' || teacherLikes.length > 0,
             stationTag: 'درع الوطن'
           };
         });
 
-      // Merge: unique by student name & title or id
-      const combined = [...benchmarkExhibits];
-      convertedLiveExhibits.forEach((liveItem) => {
-        const exists = combined.some(
-          (b) => b.id === liveItem.id || (b.studentName === liveItem.studentName && b.title === liveItem.title)
-        );
-        if (!exists) {
-          combined.unshift(liveItem);
-        }
-      });
-
-      setExhibits(combined);
+      setExhibits(convertedLiveExhibits);
     } catch (err) {
-      console.warn('Exhibition load fallback to benchmark:', err);
-      setExhibits(benchmarkExhibits);
+      console.warn('Exhibition load error:', err);
+      setExhibits([]);
     } finally {
       setIsLoading(false);
     }
@@ -306,7 +165,7 @@ export const VirtualExhibitionGallery: React.FC<VirtualExhibitionGalleryProps> =
 
   useEffect(() => {
     loadExhibitionData();
-  }, [benchmarkExhibits]);
+  }, []);
 
   // Handle Teacher Like / Endorsement Toggle
   const handleToggleTeacherLike = async (item: ExhibitionItem) => {
@@ -607,7 +466,17 @@ export const VirtualExhibitionGallery: React.FC<VirtualExhibitionGalleryProps> =
       </div>
 
       {/* ===================== EXHIBITION GALLERY GRID ===================== */}
-      {filteredExhibits.length === 0 ? (
+      {exhibits.length === 0 ? (
+        <div className="p-12 text-center rounded-3xl bg-white border-2 border-emerald-900/10 space-y-4 shadow-sm">
+          <div className="w-16 h-16 rounded-full bg-emerald-50 text-emerald-800 mx-auto flex items-center justify-center border border-emerald-200 shadow-xs">
+            <Palette className="w-8 h-8 text-emerald-700" />
+          </div>
+          <h4 className="text-lg font-black text-slate-800">لا توجد مشاركات طلابية معروضة حتى الآن</h4>
+          <p className="text-xs text-slate-600 max-w-md mx-auto leading-relaxed">
+            المعرض مخصص حصرياً لعرض المشاركات الفعلية لطالبات الثانوية الأولى بالبدع. عند تقديم الطالبات لرسوماتهن في «المرسم» أو كتابة خواطرهن في «المشاركات النصية»، ستظهر مباشرة هنا في أروقة المعرض الافتراضي لتحظى بإعجاب وإشادة المعلمات.
+          </p>
+        </div>
+      ) : filteredExhibits.length === 0 ? (
         <div className="p-12 text-center rounded-3xl bg-slate-50 border-2 border-dashed border-slate-300 space-y-3">
           <Palette className="w-12 h-12 text-slate-300 mx-auto" />
           <h4 className="text-base font-bold text-slate-700">لا توجد أعمال تطابق معايير التصفية الحالية</h4>

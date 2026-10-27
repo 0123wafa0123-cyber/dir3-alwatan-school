@@ -8,6 +8,21 @@ import {
   ClassCollaborativeProgress,
   TeacherMissionStats
 } from '../types';
+import {
+  appendSubmissionToSheet,
+  appendSurveyToSheet,
+  appendMissionToSheet,
+  getGoogleSpreadsheetDoc,
+  appendSubmissionWithGoogleSpreadsheet,
+  appendSurveyWithGoogleSpreadsheet,
+  syncAllToGoogleSheet,
+  getSpreadsheetId,
+  setSpreadsheetId,
+  getSpreadsheetUrl,
+  getGoogleSheetsStatus,
+  signInWithGoogle,
+  signOutGoogle
+} from './googleSheets';
 
 const TOKEN_KEY = 'deraa_teacher_token';
 const CUSTOM_CREDS_KEY = 'deraa_custom_teacher_credentials';
@@ -350,6 +365,10 @@ export const api = {
         // Sync local
         const local = JSON.parse(localStorage.getItem(LOCAL_SUBMISSIONS_KEY) || '[]');
         localStorage.setItem(LOCAL_SUBMISSIONS_KEY, JSON.stringify([data.submission, ...local]));
+        // Automatic cloud migration to Google Sheets
+        appendSubmissionToSheet(data.submission).catch((err) =>
+          console.warn('Google Sheets auto-migration queueing:', err)
+        );
         return data;
       }
     } catch {
@@ -372,6 +391,11 @@ export const api = {
 
     const local = JSON.parse(localStorage.getItem(LOCAL_SUBMISSIONS_KEY) || '[]');
     localStorage.setItem(LOCAL_SUBMISSIONS_KEY, JSON.stringify([newSub, ...local]));
+
+    // Automatic cloud migration to Google Sheets
+    appendSubmissionToSheet(newSub).catch((err) =>
+      console.warn('Google Sheets auto-migration queueing:', err)
+    );
 
     return {
       success: true,
@@ -453,13 +477,19 @@ export const api = {
       // fallback
     }
 
+    const surveyRecord = { ...payload, id: `SRV-${Date.now().toString(36)}`, createdAt: new Date().toISOString() };
     const localSurveys = JSON.parse(localStorage.getItem(LOCAL_SURVEYS_KEY) || '[]');
-    localSurveys.push({ ...payload, id: `SRV-${Date.now().toString(36)}`, createdAt: new Date().toISOString() });
+    localSurveys.push(surveyRecord);
     localStorage.setItem(LOCAL_SURVEYS_KEY, JSON.stringify(localSurveys));
+
+    // Auto-migrate to Google Sheets
+    appendSurveyToSheet(surveyRecord as any).catch((err) =>
+      console.warn('Survey Google Sheets migration queueing:', err)
+    );
 
     return {
       success: true,
-      message: 'تم حفظ استجابتكِ في دراسة قياس الأثر بنجاح!'
+      message: 'تم حفظ استجابتكِ في دراسة قياس الأثر بنجاح وترحيلها سحابياً!'
     };
   },
 
@@ -686,6 +716,7 @@ export const api = {
         if (data.success && data.completion) {
           saved.completions = [...(saved.completions || []), data.completion];
           localStorage.setItem(storageKey, JSON.stringify(saved));
+          appendMissionToSheet(data.completion).catch(() => {});
         }
         return data;
       }
@@ -720,6 +751,7 @@ export const api = {
 
     saved.completions = [...(saved.completions || []), newCompletion];
     localStorage.setItem(storageKey, JSON.stringify(saved));
+    appendMissionToSheet(newCompletion).catch(() => {});
 
     // Evaluate badges locally if offline
     const totalCount = saved.completions.length;
@@ -1003,6 +1035,20 @@ export const api = {
       teacherLikesCount: teacherLikes.length,
       totalLikes: teacherLikes.length
     };
+  },
+
+  // ----------------- GOOGLE-SPREADSHEET CLOUD MIGRATION SERVICE -----------------
+  googleSheets: {
+    getDoc: getGoogleSpreadsheetDoc,
+    appendSubmission: appendSubmissionWithGoogleSpreadsheet,
+    appendSurvey: appendSurveyWithGoogleSpreadsheet,
+    syncAll: syncAllToGoogleSheet,
+    getSpreadsheetId,
+    setSpreadsheetId,
+    getSpreadsheetUrl,
+    getStatus: getGoogleSheetsStatus,
+    signIn: signInWithGoogle,
+    signOut: signOutGoogle
   }
 };
 

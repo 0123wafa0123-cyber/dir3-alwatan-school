@@ -110,7 +110,13 @@ export const MissionSuccessModal: React.FC<MissionSuccessModalProps> = ({
   const handleShareWhatsApp = () => {
     const badgeText = primaryBadge ? `وحصلت على شارة «${primaryBadge.badgeTitle}» 🎖️` : '';
     const text = `🇸🇦 بفضل الله أنجزت الطالبة (${studentName}) المقيدة بالصف (${grade}) مهمة درع الوطن اليومية بنجاح وحصدت (+${pointsEarned}) نقطة درع! ${badgeText}\nالثانوية الأولى بالبدع · مبادرة درع الوطن والتوعية بالمادة 34 من النظام الأساسي للحكم.`;
-    window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`, '_blank');
+    const a = document.createElement('a');
+    a.href = `https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`;
+    a.target = '_blank';
+    a.rel = 'noopener noreferrer';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
   };
 
   return (

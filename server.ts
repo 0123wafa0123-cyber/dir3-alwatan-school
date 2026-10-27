@@ -112,6 +112,11 @@ interface DatabaseState {
   teachers: Teacher[];
   missionCompletions: StudentMissionCompletion[];
   claimedBoxes: ClaimedWeeklyBox[];
+  googleSheetConfig?: {
+    spreadsheetId?: string;
+    spreadsheetUrl?: string;
+    lastSyncTime?: string;
+  };
 }
 
 function getInitialDb(): DatabaseState {
@@ -906,6 +911,24 @@ app.get('/api/export/csv', requireTeacherAuth, (req, res) => {
   res.setHeader('Content-Type', 'text/csv; charset=utf-8');
   res.setHeader('Content-Disposition', `attachment; filename="deraa_alwatan_submissions_${new Date().toISOString().slice(0, 10)}.csv"`);
   res.status(200).send(csv);
+});
+
+// 8. Google Sheets Cloud Config & Sync Tracking API
+app.get('/api/google-sheets/config', (req, res) => {
+  const db = loadDb();
+  res.json(db.googleSheetConfig || {});
+});
+
+app.post('/api/google-sheets/config', (req, res) => {
+  const { spreadsheetId, spreadsheetUrl, lastSyncTime } = req.body;
+  const db = loadDb();
+  db.googleSheetConfig = {
+    spreadsheetId: spreadsheetId || db.googleSheetConfig?.spreadsheetId,
+    spreadsheetUrl: spreadsheetUrl || db.googleSheetConfig?.spreadsheetUrl,
+    lastSyncTime: lastSyncTime || new Date().toISOString()
+  };
+  saveDb(db);
+  res.json({ success: true, config: db.googleSheetConfig });
 });
 
 // ----------------- DAILY SHIELD MISSIONS API -----------------
